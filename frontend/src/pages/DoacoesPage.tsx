@@ -16,9 +16,8 @@ interface DoacoesProps {
   handleDonationSubmit: (e: React.FormEvent) => void;
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleRemoveFile: (index: number) => void;
-  fileInputRef: React.RefObject<HTMLInputElement | null>; // ✅ CORRIGIDO AQUI
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
 }
-
 
 const Doacoes: React.FC<DoacoesProps> = ({
   donationForm,
@@ -39,7 +38,7 @@ const Doacoes: React.FC<DoacoesProps> = ({
         <p className="mb-6 text-stone-700 dark:text-stone-300">
           Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus sit amet nulla sed nisl tristique sagittis. Nulla facilisi. 
         </p>
-        <div className="border-l-4 p-4 text-stone-700 dark:text-stone-300 border-amber-600 dark:border-amber-500 bg-white dark:bg-stone-800">
+        <div className="border-l-4 p-4 text-stone-700 dark:text-stone-300 border-purple-600 dark:border-purple-400 bg-white dark:bg-stone-800">
           <p className="font-medium">Informações bancárias:</p>
           <p>
             Banco: Banco do Brasil (001)<br/>
@@ -63,7 +62,7 @@ const Doacoes: React.FC<DoacoesProps> = ({
             type="text"
             value={donationForm.nome}
             onChange={(e) => setDonationForm({ ...donationForm, nome: e.target.value })}
-            className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white dark:bg-stone-800"
+            className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800"
             required
           />
         </div>
@@ -76,7 +75,7 @@ const Doacoes: React.FC<DoacoesProps> = ({
             type="email"
             value={donationForm.email}
             onChange={(e) => setDonationForm({ ...donationForm, email: e.target.value })}
-            className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white dark:bg-stone-800"
+            className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800"
             required
           />
         </div>
@@ -141,7 +140,7 @@ const Doacoes: React.FC<DoacoesProps> = ({
           className={`w-full flex items-center justify-center gap-2 text-white px-6 py-4 rounded-md transition-colors ${
             donationStatus === 'uploading' 
               ? 'bg-stone-500 cursor-not-allowed' 
-              : 'bg-amber-700 hover:bg-amber-800'
+              : 'bg-purple-700 hover:bg-purple-800'
           }`}
         >
           {donationStatus === 'uploading' ? (

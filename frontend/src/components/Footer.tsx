@@ -12,7 +12,7 @@ const Footer: React.FC<FooterProps> = ({ navigateTo }) => {
         <div className="grid md:grid-cols-3 gap-12">
           <div>
             <h3 className="font-serif text-2xl mb-4">
-              Festival <span className="text-amber-700 dark:text-amber-500">Cultural</span>
+              Festival <span className="text-purple-700 dark:text-purple-500">Cultural</span>
             </h3>
             <p className="text-stone-600 dark:text-stone-400">
               Cras in feugiat nisi, ac vehicula libero. Aenean nec orci sed metus imperdiet gravida sed et nisl.
@@ -23,15 +23,15 @@ const Footer: React.FC<FooterProps> = ({ navigateTo }) => {
             <h4 className="font-semibold text-lg mb-4 text-stone-800 dark:text-stone-200">Contato</h4>
             <div className="space-y-4 text-stone-600 dark:text-stone-400">
               <div className="flex items-center gap-3">
-                <Mail size={18} className="text-amber-600 dark:text-amber-500" />
+                <Mail size={18} className="text-purple-600 dark:text-purple-500" />
                 <span>contato@festivalcultural.com</span>
               </div>
               <div className="flex items-center gap-3">
-                <Phone size={18} className="text-amber-600 dark:text-amber-500" />
+                <Phone size={18} className="text-purple-600 dark:text-purple-500" />
                 <span>(12) 3456-7890</span>
               </div>
               <div className="flex items-center gap-3">
-                <MapPin size={18} className="text-amber-600 dark:text-amber-500" />
+                <MapPin size={18} className="text-purple-600 dark:text-purple-500" />
                 <span>Brasília, DF</span>
               </div>
             </div>
@@ -42,21 +42,21 @@ const Footer: React.FC<FooterProps> = ({ navigateTo }) => {
             <div className="space-y-3">
               <button 
                 onClick={() => navigateTo('inscricoes')} 
-                className="flex items-center gap-3 text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-amber-500 transition-colors"
+                className="flex items-center gap-3 text-stone-600 dark:text-stone-400 hover:text-purple-700 dark:hover:text-purple-500 transition-colors"
               >
                 <FileText size={16} />
                 <span>Inscrições</span>
               </button>
               <button 
                 onClick={() => navigateTo('edicoes')} 
-                className="flex items-center gap-3 text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-amber-500 transition-colors"
+                className="flex items-center gap-3 text-stone-600 dark:text-stone-400 hover:text-purple-700 dark:hover:text-purple-500 transition-colors"
               >
                 <Calendar size={16} />
                 <span>Edições Anteriores</span>
               </button>
               <button 
                 onClick={() => navigateTo('doacoes')} 
-                className="flex items-center gap-3 text-stone-600 dark:text-stone-400 hover:text-amber-700 dark:hover:text-amber-500 transition-colors"
+                className="flex items-center gap-3 text-stone-600 dark:text-stone-400 hover:text-purple-700 dark:hover:text-purple-500 transition-colors"
               >
                 <Check size={16} />
                 <span>Doações</span>

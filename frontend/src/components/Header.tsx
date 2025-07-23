@@ -29,7 +29,7 @@ const Header: React.FC<HeaderProps> = ({
             className="font-serif text-2xl md:text-3xl cursor-pointer" 
             onClick={() => navigateTo('home')}
           >
-            Festival <span className="text-amber-700 dark:text-amber-500">Cultural</span>
+            Festival <span className="text-purple-700 dark:text-purple-400">Cultural</span>
           </div>
           
           <nav className="hidden lg:flex items-center gap-2">
@@ -39,8 +39,8 @@ const Header: React.FC<HeaderProps> = ({
                 onClick={() => navigateTo(item.id)}
                 className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                   currentPage === item.id 
-                    ? 'bg-amber-700 text-white' 
-                    : 'text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
+                    ? 'bg-purple-700 text-white' 
+                    : 'text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-800'
                 }`}
               >
                 {item.label}
@@ -50,7 +50,7 @@ const Header: React.FC<HeaderProps> = ({
           
           <button 
             onClick={() => setIsMenuOpen(!isMenuOpen)} 
-            className="lg:hidden p-2 text-stone-600 dark:text-stone-300" 
+            className="lg:hidden p-2 text-purple-700 dark:text-purple-300" 
             aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
           >
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}

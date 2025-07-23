@@ -40,14 +40,14 @@ const Formulario: React.FC<FormularioProps> = ({
     const event = availableEvents.find(e => e.id === eventId);
     return total + (event ? parseFloat(event.price.replace('R$ ', '').replace(',', '.')) : 0);
   }, 0).toFixed(2).replace('.', ',');
-  
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-16">
       <h1 className="font-serif text-4xl md:text-5xl mb-8 text-center pb-6 border-b border-stone-200 dark:border-stone-700">
         Formulário de Inscrição
       </h1>
-      
-      <div className="p-6 rounded-lg mb-8 border border-amber-500/30 bg-amber-50/50 dark:bg-amber-900/10">
+
+      <div className="p-6 rounded-lg mb-8 border border-purple-500/30 bg-purple-50/50 dark:bg-purple-900/10">
         <h3 className="font-semibold text-lg mb-3 text-stone-900 dark:text-stone-100">
           Eventos selecionados:
         </h3>
@@ -67,7 +67,7 @@ const Formulario: React.FC<FormularioProps> = ({
           </li>
         </ul>
       </div>
-      
+
       <form onSubmit={handleFormSubmit} className="space-y-6">
         <div>
           <label className="block mb-2 font-medium text-stone-700 dark:text-stone-300">
@@ -77,11 +77,11 @@ const Formulario: React.FC<FormularioProps> = ({
             type="text"
             value={formData.nome}
             onChange={(e) => setFormData({...formData, nome: e.target.value})}
-            className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white dark:bg-stone-800"
+            className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800"
             required
           />
         </div>
-        
+
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <label className="block mb-2 font-medium text-stone-700 dark:text-stone-300">
@@ -91,7 +91,7 @@ const Formulario: React.FC<FormularioProps> = ({
               type="text"
               value={formData.documento}
               onChange={(e) => setFormData({...formData, documento: e.target.value})}
-              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white dark:bg-stone-800"
+              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800"
               required
             />
           </div>
@@ -103,12 +103,12 @@ const Formulario: React.FC<FormularioProps> = ({
               type="date"
               value={formData.dataNascimento}
               onChange={(e) => setFormData({...formData, dataNascimento: e.target.value})}
-              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white dark:bg-stone-800"
+              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800"
               required
             />
           </div>
         </div>
-        
+
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <label className="block mb-2 font-medium text-stone-700 dark:text-stone-300">
@@ -118,7 +118,7 @@ const Formulario: React.FC<FormularioProps> = ({
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({...formData, email: e.target.value})}
-              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white dark:bg-stone-800"
+              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800"
               required
             />
           </div>
@@ -130,12 +130,12 @@ const Formulario: React.FC<FormularioProps> = ({
               type="tel"
               value={formData.celular}
               onChange={(e) => setFormData({...formData, celular: e.target.value})}
-              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white dark:bg-stone-800"
+              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800"
               required
             />
           </div>
         </div>
-        
+
         <div className="flex flex-col sm:flex-row gap-4 pt-4">
           <button 
             type="button" 
@@ -146,7 +146,7 @@ const Formulario: React.FC<FormularioProps> = ({
           </button>
           <button 
             type="submit"
-            className="flex-1 bg-amber-700 hover:bg-amber-800 text-white px-6 py-3 rounded-md transition-colors"
+            className="flex-1 bg-purple-700 hover:bg-purple-800 text-white px-6 py-3 rounded-md transition-colors"
           >
             Finalizar Inscrição
           </button>

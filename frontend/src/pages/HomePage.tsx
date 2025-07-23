@@ -11,12 +11,12 @@ const Home: React.FC<HomeProps> = ({ navigateTo }) => {
       <section className="text-center bg-stone-100 dark:bg-stone-800/50 py-24">
         <div className="max-w-4xl mx-auto px-4">
           <h1 className="font-serif text-5xl md:text-7xl mb-6 text-stone-900 dark:text-stone-100">
-            Festival <span className="text-amber-700 dark:text-amber-500">Cultural</span>
+            Festival <span className="text-purple-700 dark:text-purple-400">Cultural</span>
           </h1>
 
           <button 
             onClick={() => navigateTo('inscricoes')} 
-            className="bg-amber-700 hover:bg-amber-800 text-white px-10 py-4 rounded-md transition-colors duration-300"
+            className="bg-purple-700 hover:bg-purple-800 text-white px-10 py-4 rounded-md transition-colors duration-300"
           >
             Inscreva-se Agora
           </button>
@@ -27,7 +27,7 @@ const Home: React.FC<HomeProps> = ({ navigateTo }) => {
       <section className="max-w-6xl mx-auto px-4">
         <div className="grid md:grid-cols-2 gap-16 items-center">
           <div>
-            <h2 className="font-serif text-4xl md:text-5xl mb-6 pb-4 border-b-2 border-amber-600 dark:border-amber-500 inline-block text-stone-900 dark:text-stone-100">
+            <h2 className="font-serif text-4xl md:text-5xl mb-6 pb-4 border-b-2 border-purple-600 dark:border-purple-400 inline-block text-stone-900 dark:text-stone-100">
               Lorem ipsum
             </h2>
             <div className="space-y-5 mt-8 text-stone-700 dark:text-stone-300 text-lg">

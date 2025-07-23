@@ -31,10 +31,10 @@ const MenuItem: React.FC<MenuItemProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between pb-4 border-b border-stone-200 dark:border-stone-800">
-          <span className="font-serif text-2xl">Menu</span>
+          <span className="font-serif text-2xl text-purple-900 dark:text-purple-300">Menu</span>
           <button 
             onClick={() => setIsMenuOpen(false)} 
-            className="p-2 text-stone-600 dark:text-stone-300" 
+            className="p-2 text-purple-700 dark:text-purple-300 hover:text-purple-900 dark:hover:text-white transition-colors" 
             aria-label="Fechar menu"
           >
             <X size={24} />
@@ -45,11 +45,14 @@ const MenuItem: React.FC<MenuItemProps> = ({
           {menuItems.map(item => (
             <button
               key={item.id}
-              onClick={() => navigateTo(item.id)}
+              onClick={() => {
+                navigateTo(item.id);
+                setIsMenuOpen(false);
+              }}
               className={`block w-full text-left py-3 px-4 rounded-md transition-colors ${
                 currentPage === item.id 
-                  ? 'bg-amber-700 text-white font-semibold' 
-                  : 'text-stone-700 dark:text-stone-200 hover:bg-stone-200 dark:hover:bg-stone-800'
+                  ? 'bg-purple-700 text-white font-semibold' 
+                  : 'text-purple-800 dark:text-purple-200 hover:bg-purple-100 dark:hover:bg-purple-800/40'
               }`}
             >
               {item.label}

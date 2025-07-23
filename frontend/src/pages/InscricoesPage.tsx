@@ -43,7 +43,7 @@ const Inscricoes: React.FC<InscricoesProps> = ({
               key={event.id}
               className={`border rounded-lg p-6 transition-all duration-300 ${
                 isSelected
-                  ? 'border-amber-600 bg-amber-50 dark:bg-amber-900/20 shadow-lg'
+                  ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/20 shadow-lg'
                   : isAvailable
                     ? 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 hover:border-stone-400 dark:hover:border-stone-500 hover:shadow-md'
                     : 'border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/50 opacity-70'
@@ -55,13 +55,13 @@ const Inscricoes: React.FC<InscricoesProps> = ({
                   <h3 className="text-xl font-semibold mb-2 text-stone-900 dark:text-stone-100">
                     {event.title}
                   </h3>
-                  <p className="text-amber-700 dark:text-amber-500 font-medium">
+                  <p className="text-purple-700 dark:text-purple-400 font-medium">
                     {event.instructor}
                   </p>
                 </div>
                 <div 
                   className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                    isSelected ? 'border-amber-600 bg-amber-600' : 'border-stone-400'
+                    isSelected ? 'border-purple-600 bg-purple-600' : 'border-stone-400'
                   }`}
                 >
                   {isSelected && <Check className="w-4 h-4 text-white" />}
@@ -103,7 +103,7 @@ const Inscricoes: React.FC<InscricoesProps> = ({
         <div className="text-center">
           <button 
             onClick={onContinue}
-            className="bg-amber-700 hover:bg-amber-800 text-white px-10 py-4 rounded-md transition-colors duration-300"
+            className="bg-purple-700 hover:bg-purple-800 text-white px-10 py-4 rounded-md transition-colors duration-300"
           >
             Continuar Inscrição ({selectedEvents.length} evento{selectedEvents.length > 1 ? 's' : ''})
           </button>

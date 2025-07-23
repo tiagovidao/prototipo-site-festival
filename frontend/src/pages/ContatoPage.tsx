@@ -1,6 +1,5 @@
 import React from 'react';
 
-
 interface ContatoProps {
   contactForm: {
     nome: string;
@@ -41,7 +40,7 @@ const Contato: React.FC<ContatoProps> = ({
             type="text"
             value={contactForm.nome}
             onChange={(e) => setContactForm({...contactForm, nome: e.target.value})}
-            className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white dark:bg-stone-800"
+            className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800"
             required
           />
         </div>
@@ -55,7 +54,7 @@ const Contato: React.FC<ContatoProps> = ({
               type="email"
               value={contactForm.email}
               onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
-              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white dark:bg-stone-800"
+              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800"
             />
           </div>
           <div>
@@ -66,7 +65,7 @@ const Contato: React.FC<ContatoProps> = ({
               type="tel"
               value={contactForm.telefone}
               onChange={(e) => setContactForm({...contactForm, telefone: e.target.value})}
-              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white dark:bg-stone-800"
+              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800"
             />
           </div>
         </div>
@@ -80,7 +79,7 @@ const Contato: React.FC<ContatoProps> = ({
               type="text"
               value={contactForm.cidade}
               onChange={(e) => setContactForm({...contactForm, cidade: e.target.value})}
-              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white dark:bg-stone-800"
+              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800"
             />
           </div>
           <div>
@@ -91,7 +90,7 @@ const Contato: React.FC<ContatoProps> = ({
               type="text"
               value={contactForm.escola}
               onChange={(e) => setContactForm({...contactForm, escola: e.target.value})}
-              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white dark:bg-stone-800"
+              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800"
             />
           </div>
         </div>
@@ -104,14 +103,14 @@ const Contato: React.FC<ContatoProps> = ({
             value={contactForm.mensagem}
             onChange={(e) => setContactForm({...contactForm, mensagem: e.target.value})}
             rows={5}
-            className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-transparent resize-none bg-white dark:bg-stone-800"
+            className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none bg-white dark:bg-stone-800"
             required
           />
         </div>
         
         <button 
           type="submit" 
-          className="w-full bg-amber-700 hover:bg-amber-800 text-white px-6 py-4 rounded-md transition-colors"
+          className="w-full bg-purple-700 hover:bg-purple-800 text-white px-6 py-4 rounded-md transition-colors"
         >
           Enviar Mensagem
         </button>
