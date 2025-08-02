@@ -1,7 +1,10 @@
 import {type Event } from '../types';
 
-const API_BASE_URL = 'http://localhost:3001/api';
-
+// frontend/src/services/api.ts
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://seu-backend.up.railway.app/api'
+  : 'http://localhost:3001/api';
+  
 class ApiService {
   async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
