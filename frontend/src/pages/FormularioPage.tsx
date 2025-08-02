@@ -15,6 +15,7 @@ interface FormularioProps {
     email: string;
     celular: string;
     dataNascimento: string;
+    isSubmitting: boolean;
   };
   setFormData: React.Dispatch<React.SetStateAction<{
     nome: string;
