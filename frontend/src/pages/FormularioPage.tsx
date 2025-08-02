@@ -15,7 +15,6 @@ interface FormularioProps {
     email: string;
     celular: string;
     dataNascimento: string;
-    isSubmitting: boolean;
   };
   setFormData: React.Dispatch<React.SetStateAction<{
     nome: string;
@@ -26,6 +25,7 @@ interface FormularioProps {
   }>>;
   handleFormSubmit: (e: React.FormEvent) => void;
   onBack: () => void;
+  isSubmitting: boolean;
 }
 
 const Formulario: React.FC<FormularioProps> = ({
@@ -34,7 +34,8 @@ const Formulario: React.FC<FormularioProps> = ({
   formData,
   setFormData,
   handleFormSubmit,
-  onBack
+  onBack,
+  isSubmitting
 }) => {
   // Calculate total price
   const total = selectedEvents.reduce((total, eventId) => {
@@ -147,9 +148,12 @@ const Formulario: React.FC<FormularioProps> = ({
           </button>
           <button 
             type="submit"
-            className="flex-1 bg-purple-700 hover:bg-purple-800 text-white px-6 py-3 rounded-md transition-colors"
+            disabled={isSubmitting}
+            className={`flex-1 bg-purple-700 hover:bg-purple-800 text-white px-6 py-3 rounded-md transition-colors ${
+              isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
           >
-            Finalizar Inscrição
+            {isSubmitting ? 'Processando...' : 'Finalizar Inscrição'}
           </button>
         </div>
       </form>

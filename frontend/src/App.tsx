@@ -9,46 +9,14 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import MenuItem from './components/MenuItem';
 import ApiService from './services/api';
-
-// Types
-interface Event {
-  id: string;
-  title: string;
-  instructor: string;
-  date: string;
-  time: string;
-  location: string;
-  price: string;
-  available: boolean;
-  vacancies: number;
-  totalVacancies: number;
-}
-
-interface FormData {
-  nome: string;
-  documento: string;
-  email: string;
-  celular: string;
-  dataNascimento: string;
-}
-
-interface ContactForm {
-  nome: string;
-  email: string;
-  telefone: string;
-  cidade: string;
-  escola: string;
-  mensagem: string;
-}
-
-interface DonationForm {
-  nome: string;
-  email: string;
-  comprovantes: File[];
-}
-
-type DonationStatus = 'idle' | 'uploading' | 'success' | 'error';
-type LoadingState = 'idle' | 'loading' | 'success' | 'error';
+import { 
+  type Event, 
+  type FormData, 
+  type ContactForm, 
+  type DonationForm, 
+  type DonationStatus, 
+  type LoadingState 
+} from './types';
 
 const App = () => {
   // Loading and error states

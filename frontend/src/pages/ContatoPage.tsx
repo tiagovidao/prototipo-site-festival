@@ -18,12 +18,14 @@ interface ContatoProps {
     mensagem: string;
   }>>;
   handleContactSubmit: (e: React.FormEvent) => void;
+  isSubmitting: boolean;
 }
 
 const Contato: React.FC<ContatoProps> = ({ 
   contactForm, 
   setContactForm, 
-  handleContactSubmit 
+  handleContactSubmit,
+  isSubmitting
 }) => {
   return (
     <div className="max-w-2xl mx-auto px-4 py-16">
@@ -110,9 +112,12 @@ const Contato: React.FC<ContatoProps> = ({
         
         <button 
           type="submit" 
-          className="w-full bg-purple-700 hover:bg-purple-800 text-white px-6 py-4 rounded-md transition-colors"
+          disabled={isSubmitting}
+          className={`w-full bg-purple-700 hover:bg-purple-800 text-white px-6 py-4 rounded-md transition-colors ${
+            isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
         >
-          Enviar Mensagem
+          {isSubmitting ? 'Enviando...' : 'Enviar Mensagem'}
         </button>
       </form>
     </div>
