@@ -1,7 +1,8 @@
 import {type Event } from '../types';
 
-const API_BASE_URL = 'http://localhost:3001/api';
-
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://festival-ballet-api.onrender.com/api'
+  : 'http://localhost:3001/api';
 class ApiService {
   async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
