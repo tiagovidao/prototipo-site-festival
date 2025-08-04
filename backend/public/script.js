@@ -1,4 +1,17 @@
-const API_BASE = 'http://localhost:3001/api';
+// 🚀 AUTO-DETECÇÃO DE AMBIENTE
+const API_BASE = (() => {
+    const isLocal = window.location.hostname === 'localhost' || 
+                   window.location.hostname === '127.0.0.1' || 
+                   window.location.port === '3001';
+    
+    if (isLocal) {
+        return 'http://localhost:3001/api';
+    } else {
+        // ⚠️ ALTERE APENAS ESTA LINHA COM A URL DO SEU BACKEND EM PRODUÇÃO
+        return 'https:/festival-admin.vercel.app/api';
+    }
+})();
+
 let authHeader = '', dashboardData = null, autoRefreshInterval = null;
 
 const showLoading = () => document.getElementById('loading-overlay').style.display = 'flex';
@@ -31,7 +44,10 @@ const login = async (event) => {
     showLoading();
     authHeader = 'Basic ' + btoa(document.getElementById('username').value + ':' + document.getElementById('password').value);
     try {
-        const response = await fetch(`${API_BASE}/admin/dashboard`, { headers: { 'Authorization': authHeader } });
+        const response = await fetch(`${API_BASE}/admin/dashboard`, { 
+            headers: { 'Authorization': authHeader },
+            mode: 'cors' // Importante para CORS
+        });
         if (!response.ok) throw new Error('Credenciais inválidas');
         document.getElementById('login-form').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
@@ -58,7 +74,10 @@ const logout = () => {
 const loadDashboard = async () => {
     try {
         showLoading();
-        const response = await fetch(`${API_BASE}/admin/dashboard`, { headers: { 'Authorization': authHeader } });
+        const response = await fetch(`${API_BASE}/admin/dashboard`, { 
+            headers: { 'Authorization': authHeader },
+            mode: 'cors'
+        });
         if (!response.ok) throw new Error('Erro ao carregar dados');
         dashboardData = await response.json();
         renderStats(dashboardData.stats);
@@ -145,7 +164,15 @@ const renderRecentRegistrations = registrations => {
 async function updateStatus(registrationId, newStatus) {
     showLoading();
     try {
-        const response = await fetch(`${API_BASE}/admin/registrations/${registrationId}/status`, { method: 'PUT', headers: { 'Authorization': authHeader, 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }) });
+        const response = await fetch(`${API_BASE}/admin/registrations/${registrationId}/status`, { 
+            method: 'PUT', 
+            headers: { 
+                'Authorization': authHeader, 
+                'Content-Type': 'application/json' 
+            }, 
+            body: JSON.stringify({ status: newStatus }),
+            mode: 'cors'
+        });
         if (!response.ok) throw new Error('Erro ao atualizar status');
         showNotification('Status atualizado com sucesso!', 'success');
         await loadDashboard();
