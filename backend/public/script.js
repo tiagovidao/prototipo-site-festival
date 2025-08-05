@@ -8,7 +8,7 @@ const API_BASE = (() => {
         return 'http://localhost:3001/api';
     } else {
         // ⚠️ ALTERE APENAS ESTA LINHA COM A URL DO SEU BACKEND EM PRODUÇÃO
-        return 'https:/festival-admin.vercel.app/api';
+        return 'https://festival-admin.netlify.app/api';
     }
 })();
 
