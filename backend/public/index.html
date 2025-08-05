@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Festival de Ballet</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- 🔧 CONFIGURAÇÃO PARA RENDER + NETLIFY -->
+    <script>
+        window.ENV_CONFIG = {
+            // ⚠️ ALTERE ESTA LINHA COM A URL REAL DO RENDER:
+            // Formato: https://SEU-SERVICE-NAME.onrender.com/api
+            API_BASE: 'https://festival-backend.onrender.com/api',
+            
+            DEBUG: false, // false em produção
+            TIMEOUT: 45000 // Render pode demorar mais na primeira requisição
+        };
+        
+        console.log('🔧 Configuração Render + Netlify:', window.ENV_CONFIG);
+    </script>
+</head>
+<body>
+    <div id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p style="color: white; margin-top: 1rem; text-align: center;">
+            Conectando ao servidor...<br>
+            <small>Primeira conexão pode demorar até 30s</small>
+        </p>
+    </div>
+    
+    <div id="app">
+        <div id="login-form">
+            <div class="login-container">
+                <div class="login-header">
+                    <h1>Painel Administrativo</h1>
+                    <p>Festival de Ballet 2025</p>
+                </div>
+                <form id="loginForm">
+                    <div class="input-group">
+                        <label><i class="fas fa-user"></i> Usuário</label>
+                        <input type="text" id="username" value="admin" required>
+                    </div>
+                    <div class="input-group">
+                        <label><i class="fas fa-lock"></i> Senha</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="password" required>
+                            <button type="button" id="togglePasswordButton">
+                                <i id="password-icon" class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit">
+                        <i class="fas fa-sign-in-alt"></i> Entrar
+                    </button>
+                </form>
+                <div class="login-footer">
+                    <i class="fas fa-shield-alt"></i> Área restrita
+                </div>
+                
+                <!-- 🔍 INFORMAÇÕES DE DEPLOY -->
+                <div id="deploy-info" style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; font-size: 0.85rem; color: #6c757d;">
+                    <details>
+                        <summary style="cursor: pointer; font-weight: bold;">
+                            <i class="fas fa-info-circle"></i> Informações de Deploy
+                        </summary>
+                        <div style="margin-top: 1rem;">
+                            <p><strong>Backend (Render):</strong> <span id="backend-url">Carregando...</span></p>
+                            <p><strong>Frontend (Netlify):</strong> <span id="frontend-url">Detectando...</span></p>
+                            <p><strong>Status:</strong> <span id="connection-status">Verificando...</span></p>
+                            <p><strong>Primeira conexão:</strong> Pode demorar 30-45s (Render)</p>
+                        </div>
+                    </details>
+                </div>
+            </div>
+        </div>
+        
+        <div id="dashboard">
+            <header class="dashboard-header">
+                <div class="header-container">
+                    <div class="header-left">
+                        <h1><i class="fas fa-theater-masks"></i> Festival de Ballet</h1>
+                    </div>
+                    <div class="header-right">
+                        <div class="current-time">
+                            <i class="fas fa-clock"></i> <span id="current-time"></span>
+                        </div>
+                        <button id="logoutButton">
+                            <i class="fas fa-sign-out-alt"></i> Sair
+                        </button>
+                    </div>
+                </div>
+            </header>
+            
+            <main class="dashboard-main">
+                <div class="quick-actions">
+                    <button id="refreshDashboardButton">
+                        <i class="fas fa-sync-alt"></i> Atualizar
+                    </button>
+                    <button id="exportDataButton">
+                        <i class="fas fa-download"></i> Exportar
+                    </button>
+                    <button id="showHelpButton">
+                        <i class="fas fa-question-circle"></i> Ajuda
+                    </button>
+                </div>
+                
+                <div id="stats-grid" class="stats-grid"></div>
+                
+                <div class="events-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-calendar-alt"></i> Status dos Eventos</h2>
+                        <span>Atualização automática a cada 10min</span>
+                    </div>
+                    <div id="events-list" class="events-list"></div>
+                </div>
+                
+                <div class="registrations-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-users"></i> Inscrições Recentes</h2>
+                        <select id="statusFilter">
+                            <option value="all">Todos</option>
+                            <option value="confirmada">Confirmadas</option>
+                            <option value="pendente">Pendentes</option>
+                            <option value="cancelada">Canceladas</option>
+                        </select>
+                    </div>
+                    <div id="recent-registrations" class="registrations-container"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <div id="help-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-question-circle"></i> Guia de Uso</h3>
+                <button id="closeHelpButton"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <h4>🎯 Funcionalidades:</h4>
+                <p><strong>Dashboard:</strong> Estatísticas em tempo real dos eventos e inscrições.</p>
+                <p><strong>Eventos:</strong> Monitore ocupação e veja lista de inscritos por evento.</p>
+                <p><strong>Inscrições:</strong> Gerencie status e visualize detalhes dos participantes.</p>
+                
+                <h4>⌨️ Atalhos do Teclado:</h4>
+                <p><strong>Ctrl+R:</strong> Atualizar dados</p>
+                <p><strong>Ctrl+E:</strong> Exportar relatório CSV</p>
+                <p><strong>Ctrl+?:</strong> Mostrar esta ajuda</p>
+                <p><strong>Esc:</strong> Fechar modais</p>
+                
+                <hr style="margin: 1rem 0;">
+                <h4>🔧 Informações Técnicas:</h4>
+                <p><strong>Backend:</strong> <span id="help-backend-url">Carregando...</span></p>
+                <p><strong>Frontend:</strong> <span id="help-frontend-url">Detectando...</span></p>
+                <p><strong>Deploy:</strong> Render + Netlify</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 📱 SCRIPTS -->
+    <script src="script.js"></script>
+    
+    <!-- 🔧 INICIALIZAÇÃO ESPECÍFICA PARA RENDER + NETLIFY -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Atualizar informações de deploy na interface
+            const backendUrl = document.getElementById('backend-url');
+            const frontendUrl = document.getElementById('frontend-url');  
+            const connectionStatus = document.getElementById('connection-status');
+            const helpBackendUrl = document.getElementById('help-backend-url');
+            const helpFrontendUrl = document.getElementById('help-frontend-url');
+            
+            // URLs atuais
+            const currentBackend = window.ENV_CONFIG?.API_BASE || 'Não configurado';
+            const currentFrontend = window.location.origin;
+            
+            // Atualizar elementos
+            if (backendUrl) backendUrl.textContent = currentBackend;
+            if (frontendUrl) frontendUrl.textContent = currentFrontend;
+            if (helpBackendUrl) helpBackendUrl.textContent = currentBackend;
+            if (helpFrontendUrl) helpFrontendUrl.textContent = currentFrontend;
+            
+            // Teste inicial de conectividade com timeout maior para Render
+            if (connectionStatus && window.ENV_CONFIG?.API_BASE) {
+                connectionStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Conectando...';
+                
+                const healthUrl = window.ENV_CONFIG.API_BASE.replace('/api', '') + '/health';
+                
+                // Timeout personalizado para Render (primeira conexão pode demorar)
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Timeout - Render pode estar "dormindo"')), 45000)
+                );
+                
+                Promise.race([
+                    fetch(healthUrl, { method: 'GET', mode: 'cors' }),
+                    timeoutPromise
+                ])
+                .then(response => {
+                    if (response.ok) {
+                        connectionStatus.innerHTML = '<i class="fas fa-check-circle" style="color: green;"></i> Backend conectado (Render)';
+                        console.log('✅ Render backend online');
+                    } else {
+                        connectionStatus.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: orange;"></i> Backend com problemas';
+                        console.warn('⚠️ Render resposta:', response.status);
+                    }
+                })
+                .catch(error => {
+                    connectionStatus.innerHTML = '<i class="fas fa-times-circle" style="color: red;"></i> Backend indisponível ou dormindo';
+                    console.error('❌ Erro Render:', error.message);
+                    
+                    // Dica específica para Render
+                    if (error.message.includes('Timeout')) {
+                        connectionStatus.innerHTML += '<br><small>Dica: Render pode estar hibernando. Tente novamente em 30s.</small>';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

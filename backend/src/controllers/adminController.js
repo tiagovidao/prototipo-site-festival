@@ -1,4 +1,3 @@
-// src/controllers/adminController.js
 const supabase = require('../config/supabase');
 
 const getAdminDashboard = async (req, res) => {
