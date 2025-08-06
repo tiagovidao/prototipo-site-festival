@@ -18,7 +18,6 @@ const API_BASE = (() => {
     
     // Produção: Netlify detecta automaticamente Render
     if (hostname.includes('netlify.app')) {
-        // Padrão comum: festival-backend.onrender.com
         return 'https://festival-admin.onrender.com/api';
     }
     
@@ -1147,13 +1146,16 @@ window.addEventListener('offline', () => {
     showNotification('Conexão perdida - funcionando offline', 'warning', 5000);
 });
 
-// 📊 MARCAR TIMESTAMP NOS DADOS
-const originalLoadDashboard = loadDashboard;
-loadDashboard = async () => {
-    await originalLoadDashboard();
+// 📊 MARCAR TIMESTAMP NOS DADOS - CORRIGIDO
+const originalLoadDashboardFunction = loadDashboard;
+window.loadDashboardWithTimestamp = async () => {
+    await originalLoadDashboardFunction();
     if (dashboardData) {
         dashboardData.lastUpdate = Date.now();
     }
 };
+
+// Substituir a função original
+window.loadDashboard = window.loadDashboardWithTimestamp;
 
 log.info('Script carregado completamente - Pronto para Render + Netlify! 🚀');

@@ -1,7 +1,10 @@
+// App.tsx atualizado com fluxo de pagamento
 import React from 'react';
 import Home from './pages/HomePage';
 import Inscricoes from './pages/InscricoesPage';
 import Formulario from './pages/FormularioPage';
+import PaymentForm from './components/PaymentForm'; // Novo componente
+import PaymentSuccess from './pages/PaymentSuccessPage'; // Nova página
 import Contato from './pages/ContatoPage';
 import Doacoes from './pages/DoacoesPage';
 import GenericPage from './pages/GenericPage';
@@ -15,7 +18,8 @@ import {
   type ContactForm, 
   type DonationForm, 
   type DonationStatus, 
-  type LoadingState 
+  type LoadingState, 
+  type PaymentData
 } from './types';
 
 const App = () => {
@@ -59,6 +63,9 @@ const App = () => {
   const [donationStatus, setDonationStatus] = React.useState<DonationStatus>('idle');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
+  // Payment state - NOVO
+  const [paymentData, setPaymentData] = React.useState<PaymentData | null>(null);
+
   // Refs
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -75,6 +82,7 @@ const App = () => {
     { id: 'contato', label: 'Contato' }
   ];
 
+
   // Load events on component mount
   React.useEffect(() => {
     const loadEvents = async () => {
@@ -90,14 +98,14 @@ const App = () => {
         setApiError('Erro ao carregar eventos. Verifique sua conexão e tente novamente.');
         setLoadingState('error');
         
-        // Fallback para dados estáticos em caso de erro
+        // Fallback para dados estáticos com preços atualizados
         setAvailableEvents([
-          { id: 'ballet-junior', title: 'BALLET CLÁSSICO JÚNIOR', instructor: 'CLÁUDIA ZACCARI', date: '25/08/2025', time: '13:30 às 15:00h', location: 'SALA 01', price: 'R$ 250,00', available: false, vacancies: 0, totalVacancies: 15 },
-          { id: 'ballet-pre', title: 'BALLET CLÁSSICO PRÉ', instructor: 'CARIDAD MARTINEZ', date: '25/08/2025', time: '15:00 às 16:30h', location: 'SALA 01', price: 'R$ 250,00', available: true, vacancies: 5, totalVacancies: 15 },
-          { id: 'ballet-contemporaneo', title: 'BALLET CONTEMPORÂNEO', instructor: 'FELIPE SILVA', date: '26/08/2025', time: '10:00 às 12:00h', location: 'SALA 02', price: 'R$ 200,00', available: true, vacancies: 3, totalVacancies: 10 },
-          { id: 'ballet-avancado', title: 'BALLET AVANÇADO', instructor: 'AMANDA COSTA', date: '27/08/2025', time: '14:00 às 16:00h', location: 'SALA 03', price: 'R$ 220,00', available: true, vacancies: 8, totalVacancies: 12 },
-          { id: 'ballet-infantil', title: 'BALLET INFANTIL', instructor: 'RAFAEL SANTOS', date: '28/08/2025', time: '16:30 às 18:30h', location: 'SALA 01', price: 'R$ 180,00', available: true, vacancies: 2, totalVacancies: 10 },
-          { id: 'ballet-iniciante', title: 'BALLET INICIANTE', instructor: 'JULIANA OLIVEIRA', date: '29/08/2025', time: '09:00 às 11:00h', location: 'SALA 04', price: 'R$ 240,00', available: false, vacancies: 0, totalVacancies: 8 }
+          { id: 'e1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6', title: 'BALLET CLÁSSICO JÚNIOR', instructor: 'CLÁUDIA ZACCARI', date: '25/08/2025', time: '13:30 às 15:00h', location: 'SALA 01', price: 'R$ 15,00', available: true, vacancies: 3, totalVacancies: 7 },
+          { id: 'f2b3c4d5-e6f7-g8h9-i0j1-k2l3m4n5o6p7', title: 'BALLET CLÁSSICO PRÉ', instructor: 'CARIDAD MARTINEZ', date: '25/08/2025', time: '15:00 às 16:30h', location: 'SALA 01', price: 'R$ 15,00', available: true, vacancies: 5, totalVacancies: 7 },
+          { id: 'g3c4d5e6-f7g8-h9i0-j1k2-l3m4n5o6p7q8', title: 'BALLET CONTEMPORÂNEO', instructor: 'FELIPE SILVA', date: '26/08/2025', time: '10:00 às 12:00h', location: 'SALA 02', price: 'R$ 12,00', available: true, vacancies: 6, totalVacancies: 7 },
+          { id: 'h4d5e6f7-g8h9-i0j1-k2l3-m4n5o6p7q8r9', title: 'BALLET AVANÇADO', instructor: 'AMANDA COSTA', date: '27/08/2025', time: '14:00 às 16:00h', location: 'SALA 03', price: 'R$ 18,00', available: true, vacancies: 4, totalVacancies: 7 },
+          { id: 'i5e6f7g8-h9i0-j1k2-l3m4-n5o6p7q8r9s0', title: 'BALLET INFANTIL', instructor: 'RAFAEL SANTOS', date: '28/08/2025', time: '16:30 às 18:30h', location: 'SALA 01', price: 'R$ 10,00', available: true, vacancies: 7, totalVacancies: 7 },
+          { id: 'j6f7g8h9-i0j1-k2l3-m4n5-o6p7q8r9s0t1', title: 'BALLET INICIANTE', instructor: 'JULIANA OLIVEIRA', date: '29/08/2025', time: '09:00 às 11:00h', location: 'SALA 04', price: 'R$ 20,00', available: true, vacancies: 2, totalVacancies: 7 }
         ]);
       }
     };
@@ -118,6 +126,7 @@ const App = () => {
     setContactForm({ nome: '', email: '', telefone: '', cidade: '', escola: '', mensagem: '' });
     setDonationForm({ nome: '', email: '', comprovantes: [] });
     setSelectedEvents([]);
+    setPaymentData(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -141,6 +150,7 @@ const App = () => {
     );
   };
 
+  // NOVO: Handler para continuar para pagamento
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -158,27 +168,36 @@ const App = () => {
       return;
     }
 
+    // Em vez de finalizar, ir para pagamento
+    setCurrentPage('payment');
+  };
+
+  // NOVO: Handler para sucesso do pagamento
+  const handlePaymentSuccess = async (paymentInfo: PaymentData) => {
+  try {
     setIsSubmitting(true);
 
-    try {
-      const totalAmount = calculateTotal(selectedEvents);
-      
-      await ApiService.createRegistration({
-        ...formData,
-        selectedEvents,
-        totalAmount
-      });
+    const totalAmount = calculateTotal(selectedEvents);
 
-      showSuccessMessage('Inscrição realizada com sucesso!');
-      resetForms();
-      setCurrentPage('home');
-    } catch (error) {
-      console.error('Erro ao realizar inscrição:', error);
-      showErrorMessage(`Erro ao realizar inscrição: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    // Criar inscrição após pagamento aprovado
+    await ApiService.createRegistration({
+      ...formData,
+      selectedEvents,
+      totalAmount,
+      paymentId: paymentInfo.payment_id,
+      paymentStatus: paymentInfo.status
+    });
+
+    setPaymentData(paymentInfo);
+    setCurrentPage('payment-success');
+
+  } catch (error) {
+    console.error('Erro ao finalizar inscrição:', error);
+    showErrorMessage(`Erro ao finalizar inscrição: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -213,7 +232,6 @@ const App = () => {
     setDonationStatus('uploading');
 
     try {
-      // Convert files to names for API (in production, you'd upload files to storage first)
       const comprovantesNames = donationForm.comprovantes.map(file => file.name);
       
       await ApiService.createDonation({
@@ -348,6 +366,40 @@ const App = () => {
               handleFormSubmit={handleFormSubmit}
               onBack={() => setCurrentPage('inscricoes')}
               isSubmitting={isSubmitting}
+            />
+          </>
+        );
+
+      // NOVA PÁGINA DE PAGAMENTO
+      case 'payment':
+        return (
+          <>
+            {ErrorBanner}
+            <PaymentForm 
+              selectedEvents={selectedEvents}
+              availableEvents={availableEvents}
+              formData={formData}
+              onPaymentSuccess={handlePaymentSuccess}
+              onBack={() => setCurrentPage('formulario')}
+              totalAmount={calculateTotal(selectedEvents)}
+            />
+          </>
+        );
+
+      // NOVA PÁGINA DE SUCESSO
+      case 'payment-success':
+        return (
+          <>
+            {ErrorBanner}
+            <PaymentSuccess 
+              paymentData={paymentData}
+              selectedEvents={selectedEvents}
+              availableEvents={availableEvents}
+              formData={formData}
+              onNewRegistration={() => {
+                resetForms();
+                setCurrentPage('home');
+              }}
             />
           </>
         );

@@ -37,3 +37,9 @@ export interface DonationForm {
 
 export type DonationStatus = 'idle' | 'uploading' | 'success' | 'error';
 export type LoadingState = 'idle' | 'loading' | 'success' | 'error';
+
+export interface PaymentData {
+  payment_id: string;
+  status: string;
+  method: string;
+}

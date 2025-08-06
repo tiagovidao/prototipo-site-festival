@@ -1,9 +1,9 @@
-// src/routes/index.js
+// backend/src/routes/index.js - ATUALIZADO
 const express = require('express');
 const router = express.Router();
 
 // Importar controllers de forma segura
-let eventsController, registrationsController, contactController, donationsController, adminController;
+let eventsController, registrationsController, contactController, donationsController, adminController, paymentController;
 
 try {
   eventsController = require('../controllers/eventsController');
@@ -11,6 +11,7 @@ try {
   contactController = require('../controllers/contactController');
   donationsController = require('../controllers/donationsController');
   adminController = require('../controllers/adminController');
+  paymentController = require('../controllers/paymentController'); // NOVO
 } catch (error) {
   console.error('Erro ao importar controllers:', error.message);
 }
@@ -21,7 +22,7 @@ router.use((req, res, next) => {
   next();
 });
 
-// Middleware básico de autenticação para rotas admin (simples para teste)
+// Middleware básico de autenticação para rotas admin
 const basicAuth = (req, res, next) => {
   const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
   const provided = req.headers.authorization?.replace('Basic ', '');
@@ -96,6 +97,96 @@ router.post('/donations', async (req, res) => {
   }
 });
 
+// === ROTAS DE PAGAMENTO (NOVO) ===
+
+// Criar preferência de pagamento
+router.post('/payment/create-preference', async (req, res) => {
+  try {
+    if (paymentController && paymentController.createPaymentPreference) {
+      await paymentController.createPaymentPreference(req, res);
+    } else {
+      // Fallback simples para testes sem Mercado Pago
+      const { paymentData, method } = req.body;
+      const mockPaymentId = `mock_${Date.now()}`;
+      
+      if (method === 'pix') {
+        res.json({
+          payment_id: mockPaymentId,
+          qr_code: 'mock_pix_code_123456789',
+          qr_code_base64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
+        });
+      } else {
+        res.json({
+          preference_id: `pref_${mockPaymentId}`,
+          init_point: 'https://mercadopago.com/mock'
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Erro na rota /payment/create-preference:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Processar pagamento com cartão
+router.post('/payment/process-card', async (req, res) => {
+  try {
+    if (paymentController && paymentController.processCardPayment) {
+      await paymentController.processCardPayment(req, res);
+    } else {
+      // Mock para testes
+      const mockPaymentId = `card_${Date.now()}`;
+      setTimeout(() => {
+        res.json({
+          payment_id: mockPaymentId,
+          status: 'approved',
+          status_detail: 'accredited'
+        });
+      }, 2000); // Simular processamento
+    }
+  } catch (error) {
+    console.error('Erro na rota /payment/process-card:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Verificar status do pagamento
+router.get('/payment/check/:paymentId', async (req, res) => {
+  try {
+    if (paymentController && paymentController.checkPaymentStatus) {
+      await paymentController.checkPaymentStatus(req, res);
+    } else {
+      // Mock para testes - simular aprovação após 10 segundos
+      const { paymentId } = req.params;
+      const isOld = Date.now() - parseInt(paymentId.split('_')[1]) > 10000;
+      
+      res.json({
+        payment_id: paymentId,
+        status: isOld ? 'approved' : 'pending',
+        status_detail: isOld ? 'accredited' : 'pending_payment'
+      });
+    }
+  } catch (error) {
+    console.error('Erro na rota /payment/check:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// Webhook do Mercado Pago
+router.post('/payment/webhook', async (req, res) => {
+  try {
+    if (paymentController && paymentController.handleWebhook) {
+      await paymentController.handleWebhook(req, res);
+    } else {
+      console.log('📢 Webhook recebido:', req.body);
+      res.status(200).send('OK');
+    }
+  } catch (error) {
+    console.error('Erro na rota /payment/webhook:', error);
+    res.status(500).send('Error');
+  }
+});
+
 // === ROTAS ADMINISTRATIVAS (com autenticação básica) ===
 
 // Dashboard administrativo
@@ -150,6 +241,10 @@ router.get('/test', (req, res) => {
       'POST /api/registrations',
       'POST /api/contacts',
       'POST /api/donations',
+      'POST /api/payment/create-preference',
+      'POST /api/payment/process-card',
+      'GET /api/payment/check/:paymentId',
+      'POST /api/payment/webhook',
       'GET /admin/dashboard (autenticação necessária)',
       'GET /admin/registrations (autenticação necessária)',
       'PUT /admin/registrations/:id/status (autenticação necessária)'
