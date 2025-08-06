@@ -30,8 +30,47 @@ const getBackendUrl = () => {
   return backendUrl.split(',')[0].trim();
 };
 
-// Função para validar e formatar CPF/CNPJ
+// Função para validar CPF (algoritmo básico)
+const validateCPF = (cpf) => {
+  if (typeof cpf !== 'string') return false;
+  
+  // Remove formatação
+  cpf = cpf.replace(/[\D]/g, '');
+  
+  // Verifica se tem 11 dígitos
+  if (cpf.length !== 11) return false;
+  
+  // Verifica se todos os dígitos são iguais (CPFs inválidos conhecidos)
+  if (/^(\d)\1+$/.test(cpf)) return false;
+  
+  // Validação dos dígitos verificadores
+  let sum = 0;
+  let remainder;
+  
+  // Primeiro dígito verificador
+  for (let i = 1; i <= 9; i++) {
+    sum += parseInt(cpf.substring(i - 1, i)) * (11 - i);
+  }
+  remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cpf.substring(9, 10))) return false;
+  
+  // Segundo dígito verificador
+  sum = 0;
+  for (let i = 1; i <= 10; i++) {
+    sum += parseInt(cpf.substring(i - 1, i)) * (12 - i);
+  }
+  remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cpf.substring(10, 11))) return false;
+  
+  return true;
+};
+
+// Função para validar e formatar documento
 const validateAndFormatDocument = (identification) => {
+  console.log('🔍 Validando identificação recebida:', identification);
+  
   if (!identification || !identification.number || !identification.type) {
     throw new Error('Identificação do usuário é obrigatória');
   }
@@ -39,50 +78,79 @@ const validateAndFormatDocument = (identification) => {
   let { number, type } = identification;
   
   // Remover caracteres não numéricos
-  number = number.replace(/\D/g, '');
+  const cleanNumber = number.replace(/\D/g, '');
+  console.log('🔍 Número limpo:', cleanNumber);
   
   // Validar formato baseado no tipo
-  if (type === 'CPF') {
-    if (number.length !== 11) {
-      throw new Error('CPF deve ter 11 dígitos');
-    }
-    // Verificar se não é um CPF conhecido como inválido (todos os dígitos iguais)
-    if (/^(\d)\1{10}$/.test(number)) {
-      throw new Error('CPF inválido');
-    }
-    
-    // Para ambiente de teste, usar CPFs válidos para sandbox do MercadoPago
+  if (type === 'CPF' || !type) { // Assumir CPF como padrão
+    // Para ambiente de desenvolvimento/teste, usar CPFs de teste válidos
     if (process.env.NODE_ENV === 'development') {
-      // CPFs de teste recomendados pelo MercadoPago
+      // CPFs de teste recomendados pelo MercadoPago para sandbox
       const testCPFs = [
-        '11144477735', // Sempre aprova
-        '01234567890', // Para testes gerais
-        '12345678901'  // Para testes gerais
+        '11144477735', // Sempre aprova pagamentos
+        '12345678909', // CPF de teste geral
+        '01234567890', // CPF de teste alternativo
+        '11122233396', // CPF de teste adicional
+        '44477735530'  // CPF de teste adicional
       ];
       
-      console.log(`🔍 CPF fornecido: ${number}`);
+      console.log('🔍 CPF fornecido:', cleanNumber);
+      
+      // Se o CPF limpo tiver menos de 11 dígitos, completar com zeros à esquerda
+      let paddedCPF = cleanNumber.padStart(11, '0');
+      console.log('🔍 CPF com padding:', paddedCPF);
       
       // Se for um CPF de teste válido, usar como está
-      if (testCPFs.includes(number)) {
-        console.log('✅ Usando CPF de teste válido');
+      if (testCPFs.includes(paddedCPF)) {
+        console.log('✅ Usando CPF de teste válido:', paddedCPF);
+        return {
+          type: 'CPF',
+          number: paddedCPF
+        };
       } else {
-        // Se não for um CPF de teste, usar um CPF padrão para sandbox
-        console.log('⚠️ CPF não é de teste, usando CPF padrão para sandbox');
-        number = '11144477735'; // CPF de teste que sempre funciona
+        // Verificar se é um CPF válido usando algoritmo
+        if (validateCPF(paddedCPF)) {
+          console.log('✅ CPF válido fornecido:', paddedCPF);
+          return {
+            type: 'CPF',
+            number: paddedCPF
+          };
+        } else {
+          // Se não for válido, usar um CPF padrão para sandbox
+          console.log('⚠️ CPF inválido, usando CPF padrão para sandbox');
+          return {
+            type: 'CPF',
+            number: '11144477735' // CPF de teste que sempre funciona
+          };
+        }
       }
+    } else {
+      // Em produção, validar rigorosamente
+      if (cleanNumber.length !== 11) {
+        throw new Error('CPF deve ter 11 dígitos');
+      }
+      
+      if (!validateCPF(cleanNumber)) {
+        throw new Error('CPF inválido');
+      }
+      
+      return {
+        type: 'CPF',
+        number: cleanNumber
+      };
     }
   } else if (type === 'CNPJ') {
-    if (number.length !== 14) {
+    if (cleanNumber.length !== 14) {
       throw new Error('CNPJ deve ter 14 dígitos');
     }
+    // Adicionar validação de CNPJ se necessário
+    return {
+      type: 'CNPJ',
+      number: cleanNumber
+    };
   } else {
     throw new Error('Tipo de documento deve ser CPF ou CNPJ');
   }
-  
-  return {
-    type,
-    number
-  };
 };
 
 // Criar preferência de pagamento
@@ -90,6 +158,8 @@ const createPaymentPreference = async (req, res) => {
   try {
     const { paymentData, method } = req.body;
     const isPix = method === 'pix';
+
+    console.log('📋 Dados recebidos:', { method, paymentData: paymentData ? 'presente' : 'ausente' });
 
     // Validar dados de entrada
     if (!paymentData || !paymentData.items || !paymentData.payer) {
@@ -103,7 +173,9 @@ const createPaymentPreference = async (req, res) => {
     let validatedIdentification;
     try {
       validatedIdentification = validateAndFormatDocument(paymentData.payer.identification);
+      console.log('✅ Documento validado:', validatedIdentification);
     } catch (error) {
+      console.error('❌ Erro na validação do documento:', error.message);
       return res.status(400).json({
         error: 'Documento de identificação inválido',
         message: error.message
@@ -135,7 +207,10 @@ const createPaymentPreference = async (req, res) => {
     // Preparar dados básicos para ambos os métodos
     const basePaymentData = {
       items: paymentData.items,
-      payer: paymentData.payer,
+      payer: {
+        ...paymentData.payer,
+        identification: validatedIdentification // Usar identificação validada
+      },
       statement_descriptor: 'FESTIVAL BALLET',
       external_reference: `registration_${Date.now()}`,
     };
@@ -222,7 +297,8 @@ const createPaymentPreference = async (req, res) => {
     console.log('📋 Dados da preferência:', {
       items: preferenceData.items.length,
       notification_url: preferenceData.notification_url,
-      external_reference: preferenceData.external_reference
+      external_reference: preferenceData.external_reference,
+      payer_identification: preferenceData.payer.identification
     });
 
     const result = await preference.create({ body: preferenceData });
