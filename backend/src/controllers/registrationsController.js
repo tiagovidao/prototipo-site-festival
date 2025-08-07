@@ -1,4 +1,82 @@
+// backend/src/controllers/registrationsController.js - ADICIONADO
 const supabase = require('../config/supabase');
+
+// NOVA FUNÇÃO: Validar dados antes de prosseguir com pagamento
+const validateRegistrationData = async (req, res) => {
+  try {
+    console.log('📋 Validando dados de inscrição:', req.body);
+    
+    const { documento, email } = req.body;
+
+    // Validação básica
+    if (!documento || !email) {
+      return res.status(400).json({ 
+        error: 'Documento e email são obrigatórios para validação',
+        isValid: false,
+        conflicts: []
+      });
+    }
+
+    // Verificar se já existe uma inscrição com mesmo documento ou email
+    const { data: existingRegistrations, error } = await supabase
+      .from('registrations')
+      .select('id, documento, email, status')
+      .or(`documento.eq.${documento.trim()},email.eq.${email.trim()}`)
+      .neq('status', 'cancelada'); // Ignorar inscrições canceladas
+
+    if (error) {
+      console.error('Erro ao validar duplicatas:', error);
+      throw error;
+    }
+
+    console.log('🔍 Inscrições encontradas:', existingRegistrations);
+
+    // Se não encontrou nenhuma, está válido
+    if (!existingRegistrations || existingRegistrations.length === 0) {
+      return res.json({
+        isValid: true,
+        conflicts: []
+      });
+    }
+
+    // Se encontrou, identificar os conflitos
+    const conflicts = [];
+    
+    for (const registration of existingRegistrations) {
+      if (registration.documento === documento.trim()) {
+        conflicts.push({
+          type: 'documento',
+          value: documento,
+          status: registration.status
+        });
+      }
+      
+      if (registration.email === email.trim()) {
+        conflicts.push({
+          type: 'email', 
+          value: email,
+          status: registration.status
+        });
+      }
+    }
+
+    console.log('⚠️ Conflitos encontrados:', conflicts);
+
+    return res.json({
+      isValid: false,
+      conflicts: conflicts
+    });
+
+  } catch (error) {
+    console.error('Erro na validação de duplicatas:', error);
+    res.status(500).json({ 
+      error: 'Erro interno na validação',
+      message: error.message,
+      isValid: false,
+      conflicts: []
+    });
+  }
+};
 
 const createRegistration = async (req, res) => {
   try {
@@ -173,8 +251,8 @@ const updateRegistrationStatus = async (req, res) => {
 };
 
 module.exports = { 
+  validateRegistrationData, // NOVA EXPORTAÇÃO
   createRegistration, 
   getRegistrations, 
   updateRegistrationStatus 
 };
-

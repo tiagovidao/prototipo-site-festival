@@ -55,6 +55,19 @@ router.get('/events', async (req, res) => {
   }
 });
 
+router.post('/registrations/validate', async (req, res) => {
+  try {
+    if (registrationsController && registrationsController.validateRegistrationData) {
+      await registrationsController.validateRegistrationData(req, res);
+    } else {
+      res.status(500).json({ error: 'Controller de validação não disponível' });
+    }
+  } catch (error) {
+    console.error('Erro na rota /registrations/validate:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 // Inscrições
 router.post('/registrations', async (req, res) => {
   try {
