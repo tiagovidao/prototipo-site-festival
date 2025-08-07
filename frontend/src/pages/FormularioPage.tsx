@@ -1,9 +1,19 @@
-import React, { useState } from 'react';
-import { AlertCircle, CheckCircle } from 'lucide-react';
+// frontend/src/pages/FormularioPage.tsx - Versão otimizada
+import React, { useState, useCallback } from 'react';
+
+type FormDataType = {
+  nome: string;
+  documento: string;
+  email: string;
+  celular: string;
+  dataNascimento: string;
+};
+import { AlertCircle, CheckCircle, ArrowLeft, ArrowRight, User, Mail, Phone, Calendar, CreditCard } from 'lucide-react';
 
 interface Event {
   id: string;
   title: string;
+  instructor: string;
   price: string;
 }
 
@@ -17,17 +27,55 @@ interface FormularioProps {
     celular: string;
     dataNascimento: string;
   };
-  setFormData: React.Dispatch<React.SetStateAction<{
+  setFormData: (data: FormDataType) => void;
+  handleFormSubmit: (e: React.FormEvent) => void;
+  onBack: () => void;
+  isSubmitting: boolean;
+}
+
+// Hook customizado para validação de CPF
+const useCPFValidation = () => {
+  const [validation, setValidation] = useState<{
+    isValid: boolean | null;
+    message: string;
+  }>({ isValid: null, message: '' });
+
+  const formatCPF = useCallback((value: string): string => {
+    const numbers = value.replace(/\D/g, '').slice(0, 11);
+    
+    if (numbers.length <= 3) return numbers;
+    if (numbers.length <= 6) return numbers.replace(/(\d{3})(\d+)/, '$1.$2');
+    if (numbers.length <= 9) return numbers.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3');
+    return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d+)/, '$1.$2.$3-$4');
+  }, []);
+
+  const validateCPF = useCallback((cpf: string): { isValid: boolean; message: string } => {
+    const numbers = cpf.replace(/\D/g, '');
+    
+    if (numbers.length === 0) return { isValid: false, message: '' };
+    if (numbers.length < 11) return { isValid: false, message: 'CPF deve ter 11 dígitos' };
+    
+    // Validação básica - pode ser expandida com algoritmo completo
+    return { isValid: true, message: 'CPF válido' };
+  }, []);
+
+  type FormDataType = {
     nome: string;
     documento: string;
     email: string;
     celular: string;
     dataNascimento: string;
-  }>>;
-  handleFormSubmit: (e: React.FormEvent) => void;
-  onBack: () => void;
-  isSubmitting: boolean;
-}
+  };
+
+  const handleCPFChange = (value: string, setFormData: (data: FormDataType) => void, formData: FormDataType) => {
+    const formattedValue = formatCPF(value);
+    setFormData({ ...formData, documento: formattedValue });
+    const validationResult = validateCPF(formattedValue);
+    setValidation(validationResult);
+  };
+
+  return { validation, handleCPFChange };
+};
 
 const Formulario: React.FC<FormularioProps> = ({
   selectedEvents,
@@ -38,102 +86,54 @@ const Formulario: React.FC<FormularioProps> = ({
   onBack,
   isSubmitting
 }) => {
-  const [cpfValidation, setCpfValidation] = useState<{
-    isValid: boolean | null;
-    message: string;
-  }>({ isValid: null, message: '' });
-
-  // Função para formatar CPF
-  const formatCPF = (value: string): string => {
-    // Remove tudo que não é número
-    const numbers = value.replace(/\D/g, '');
-    
-    // Limita a 11 dígitos
-    const limitedNumbers = numbers.slice(0, 11);
-    
-    // Aplica a formatação
-    if (limitedNumbers.length <= 3) {
-      return limitedNumbers;
-    } else if (limitedNumbers.length <= 6) {
-      return limitedNumbers.replace(/(\d{3})(\d+)/, '$1.$2');
-    } else if (limitedNumbers.length <= 9) {
-      return limitedNumbers.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3');
-    } else {
-      return limitedNumbers.replace(/(\d{3})(\d{3})(\d{3})(\d+)/, '$1.$2.$3-$4');
-    }
-  };
-
-  // Função para validar CPF
-  const validateCPF = (cpf: string): { isValid: boolean; message: string } => {
-    // Remove formatação
-    const numbers = cpf.replace(/\D/g, '');
-    
-    // Verifica se está vazio
-    if (numbers.length === 0) {
-      return { isValid: false, message: '' };
-    }
-    
-    // Verifica se tem menos de 11 dígitos
-    if (numbers.length < 11) {
-      return { isValid: false, message: 'CPF deve ter 11 dígitos' };
-    }
-    
-    return { isValid: true, message: 'CPF válido' };
-  };
-
-  // Handler para mudança no campo CPF
-  const handleCPFChange = (value: string) => {
-    const formattedValue = formatCPF(value);
-    setFormData({ ...formData, documento: formattedValue });
-    
-    // Validar CPF em tempo real
-    const validation = validateCPF(formattedValue);
-    setCpfValidation(validation);
-  };
+  const { validation: cpfValidation, handleCPFChange } = useCPFValidation();
+  const [emailValidation, setEmailValidation] = useState<boolean | null>(null);
 
   // Formatar celular
-  const formatCelular = (value: string): string => {
-    // Remove tudo que não é número
-    const numbers = value.replace(/\D/g, '');
+  const formatCelular = useCallback((value: string): string => {
+    const numbers = value.replace(/\D/g, '').slice(0, 11);
     
-    // Limita a 11 dígitos
-    const limitedNumbers = numbers.slice(0, 11);
-    
-    // Aplica a formatação
-    if (limitedNumbers.length <= 2) {
-      return limitedNumbers;
-    } else if (limitedNumbers.length <= 7) {
-      return limitedNumbers.replace(/(\d{2})(\d+)/, '($1) $2');
-    } else if (limitedNumbers.length <= 11) {
-      // Formato: (11) 99999-9999 ou (11) 9999-9999
-      if (limitedNumbers.length === 11) {
-        return limitedNumbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-      } else {
-        return limitedNumbers.replace(/(\d{2})(\d{4})(\d+)/, '($1) $2-$3');
-      }
-    }
-    
-    return limitedNumbers;
-  };
+    if (numbers.length <= 2) return numbers;
+    if (numbers.length <= 7) return numbers.replace(/(\d{2})(\d+)/, '($1) $2');
+    if (numbers.length === 11) return numbers.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+    return numbers.replace(/(\d{2})(\d{4})(\d+)/, '($1) $2-$3');
+  }, []);
 
-  // Handler para mudança no celular
-  const handleCelularChange = (value: string) => {
+  // Validar email
+  const validateEmail = useCallback((email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }, []);
+
+  // Handlers
+  const handleCelularChange = useCallback((value: string) => {
     const formattedValue = formatCelular(value);
     setFormData({ ...formData, celular: formattedValue });
-  };
+  }, [formatCelular, formData, setFormData]);
 
-  // Validar formulário antes do submit
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleEmailChange = useCallback((value: string) => {
+    setFormData({ ...formData, email: value });
+    if (value) {
+      setEmailValidation(validateEmail(value));
+    } else {
+      setEmailValidation(null);
+    }
+  }, [formData, setFormData, validateEmail]);
+
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validar CPF antes de submeter
-    const cpfValidationResult = validateCPF(formData.documento);
-    if (!cpfValidationResult.isValid) {
-      setCpfValidation(cpfValidationResult);
+    // Validações
+    if (!cpfValidation.isValid) {
+      alert('Por favor, insira um CPF válido.');
       return;
     }
-    
-    // Validar outros campos
+
+    if (emailValidation === false) {
+      alert('Por favor, insira um email válido.');
+      return;
+    }
+
     const requiredFields = ['nome', 'documento', 'email', 'celular', 'dataNascimento'];
     const missingFields = requiredFields.filter(field => !formData[field as keyof typeof formData]?.trim());
     
@@ -142,183 +142,266 @@ const Formulario: React.FC<FormularioProps> = ({
       return;
     }
     
-    // Se chegou até aqui, o formulário está válido
     handleFormSubmit(e);
-  };
+  }, [cpfValidation, emailValidation, formData, handleFormSubmit]);
 
-  // Calculate total price
-  const total = selectedEvents.reduce((total, eventId) => {
+  // Calcular total
+  const total = selectedEvents.reduce((sum, eventId) => {
     const event = availableEvents.find(e => e.id === eventId);
-    return total + (event ? parseFloat(event.price.replace('R$ ', '').replace(',', '.')) : 0);
-  }, 0).toFixed(2).replace('.', ',');
+    return sum + (event ? parseFloat(event.price.replace('R$ ', '').replace(',', '.')) : 0);
+  }, 0);
+
+  // Verificar se o formulário está válido
+  const isFormValid = cpfValidation.isValid && emailValidation !== false && 
+    Object.values(formData).every(value => value.trim());
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-16">
-      <h1 className="font-serif text-4xl md:text-5xl mb-8 text-center pb-6 border-b border-stone-200 dark:border-stone-700">
-        Formulário de Inscrição
-      </h1>
-
-      <div className="p-6 rounded-lg mb-8 border border-purple-500/30 bg-purple-50/50 dark:bg-purple-900/10">
-        <h3 className="font-semibold text-lg mb-3 text-stone-900 dark:text-stone-100">
-          Eventos selecionados:
-        </h3>
-        <ul className="text-stone-700 dark:text-stone-300 space-y-2">
-          {selectedEvents.map(eventId => {
-            const event = availableEvents.find(e => e.id === eventId);
-            return (
-              <li key={eventId} className="flex justify-between">
-                <span>• {event?.title}</span>
-                <span className="font-medium">{event?.price}</span>
-              </li>
-            );
-          })}
-          <li className="flex justify-between mt-3 pt-3 border-t border-stone-300 dark:border-stone-600">
-            <span className="font-bold">Total:</span>
-            <span className="font-bold">R$ {total}</span>
-          </li>
-        </ul>
+    <div className="max-w-3xl mx-auto px-4 py-16">
+      <div className="mb-8">
+        <button 
+          onClick={onBack}
+          className="flex items-center text-purple-700 hover:text-purple-800 transition-colors mb-4"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Voltar aos eventos
+        </button>
+        
+        <h1 className="font-serif text-4xl md:text-5xl mb-4 text-center">
+          Formulário de Inscrição
+        </h1>
+        
+        <div className="w-24 h-1 bg-purple-600 mx-auto mb-8"></div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="block mb-2 font-medium text-stone-700 dark:text-stone-300">
-            Nome completo *
-          </label>
-          <input
-            type="text"
-            value={formData.nome}
-            onChange={(e) => setFormData({...formData, nome: e.target.value})}
-            className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800"
-            placeholder="Digite seu nome completo"
-            required
-          />
+      {/* Resumo dos eventos selecionados */}
+      <div className="bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl p-6 mb-8 border border-purple-200 dark:border-purple-800">
+        <h3 className="font-semibold text-xl mb-4 text-stone-900 dark:text-stone-100 flex items-center">
+          <CreditCard className="w-5 h-5 mr-2 text-purple-600" />
+          Resumo da Inscrição
+        </h3>
+        
+        <div className="space-y-3">
+          {selectedEvents.map((eventId, index) => {
+            const event = availableEvents.find(e => e.id === eventId);
+            return (
+              <div key={eventId} className="flex justify-between items-center py-2">
+                <div className="flex items-center">
+                  <span className="w-6 h-6 bg-purple-600 text-white rounded-full text-sm flex items-center justify-center mr-3">
+                    {index + 1}
+                  </span>
+                  <div>
+                    <p className="font-medium text-stone-900 dark:text-stone-100">{event?.title}</p>
+                    <p className="text-sm text-stone-600 dark:text-stone-400">{event?.instructor}</p>
+                  </div>
+                </div>
+                <span className="font-bold text-purple-700 dark:text-purple-400">{event?.price}</span>
+              </div>
+            );
+          })}
+          
+          <div className="border-t border-purple-300 dark:border-purple-700 pt-3 mt-4">
+            <div className="flex justify-between items-center">
+              <span className="text-xl font-bold text-stone-900 dark:text-stone-100">Total:</span>
+              <span className="text-2xl font-bold text-purple-700 dark:text-purple-400">
+                {total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </span>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+      {/* Formulário */}
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid gap-6">
+          {/* Nome */}
           <div>
-            <label className="block mb-2 font-medium text-stone-700 dark:text-stone-300">
-              CPF *
+            <label className="block mb-2 font-medium text-stone-700 dark:text-stone-300 flex items-center">
+              <User className="w-4 h-4 mr-2" />
+              Nome completo *
             </label>
-            <div className="relative">
+            <input
+              type="text"
+              value={formData.nome}
+              onChange={(e) => setFormData({...formData, nome: e.target.value})}
+              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800 transition-all"
+              placeholder="Digite seu nome completo"
+              required
+            />
+          </div>
+
+          {/* CPF e Data de Nascimento */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block mb-2 font-medium text-stone-700 dark:text-stone-300 flex items-center">
+                <CreditCard className="w-4 h-4 mr-2" />
+                CPF *
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={formData.documento}
+                  onChange={(e) => handleCPFChange(e.target.value, setFormData, formData)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent bg-white dark:bg-stone-800 pr-10 transition-all ${
+                    cpfValidation.isValid === null
+                      ? 'border-stone-300 dark:border-stone-600 focus:ring-purple-500'
+                      : cpfValidation.isValid
+                      ? 'border-green-300 dark:border-green-600 focus:ring-green-500'
+                      : 'border-red-300 dark:border-red-600 focus:ring-red-500'
+                  }`}
+                  placeholder="000.000.000-00"
+                  maxLength={14}
+                  required
+                />
+                
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  {cpfValidation.isValid === true && (
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                  )}
+                  {cpfValidation.isValid === false && cpfValidation.message && (
+                    <AlertCircle className="h-5 w-5 text-red-500" />
+                  )}
+                </div>
+              </div>
+              
+              {cpfValidation.message && (
+                <p className={`mt-2 text-sm ${
+                  cpfValidation.isValid 
+                    ? 'text-green-600 dark:text-green-400' 
+                    : 'text-red-600 dark:text-red-400'
+                }`}>
+                  {cpfValidation.message}
+                </p>
+              )}
+            </div>
+            
+            <div>
+              <label className="block mb-2 font-medium text-stone-700 dark:text-stone-300 flex items-center">
+                <Calendar className="w-4 h-4 mr-2" />
+                Data de Nascimento *
+              </label>
               <input
-                type="text"
-                value={formData.documento}
-                onChange={(e) => handleCPFChange(e.target.value)}
-                className={`w-full px-4 py-3 border rounded-md focus:ring-2 focus:border-transparent bg-white dark:bg-stone-800 pr-10 ${
-                  cpfValidation.isValid === null
-                    ? 'border-stone-300 dark:border-stone-600 focus:ring-purple-500'
-                    : cpfValidation.isValid
-                    ? 'border-green-300 dark:border-green-600 focus:ring-green-500'
-                    : 'border-red-300 dark:border-red-600 focus:ring-red-500'
-                }`}
-                placeholder="000.000.000-00"
-                maxLength={14} // CPF formatado: 000.000.000-00
+                type="date"
+                value={formData.dataNascimento}
+                onChange={(e) => setFormData({...formData, dataNascimento: e.target.value})}
+                className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800 transition-all"
                 required
               />
-              
-              {/* Ícone de validação */}
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                {cpfValidation.isValid === true && (
-                  <CheckCircle className="h-5 w-5 text-green-500" />
-                )}
-                {cpfValidation.isValid === false && cpfValidation.message && (
-                  <AlertCircle className="h-5 w-5 text-red-500" />
-                )}
+            </div>
+          </div>
+
+          {/* Email e Celular */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block mb-2 font-medium text-stone-700 dark:text-stone-300 flex items-center">
+                <Mail className="w-4 h-4 mr-2" />
+                Email *
+              </label>
+              <div className="relative">
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => handleEmailChange(e.target.value)}
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent bg-white dark:bg-stone-800 pr-10 transition-all ${
+                    emailValidation === null
+                      ? 'border-stone-300 dark:border-stone-600 focus:ring-purple-500'
+                      : emailValidation
+                      ? 'border-green-300 dark:border-green-600 focus:ring-green-500'
+                      : 'border-red-300 dark:border-red-600 focus:ring-red-500'
+                  }`}
+                  placeholder="seu.email@exemplo.com"
+                  required
+                />
+                
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                  {emailValidation === true && (
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                  )}
+                  {emailValidation === false && (
+                    <AlertCircle className="h-5 w-5 text-red-500" />
+                  )}
+                </div>
               </div>
+              
+              {emailValidation === false && (
+                <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+                  Email inválido
+                </p>
+              )}
             </div>
             
-            {/* Mensagem de validação */}
-            {cpfValidation.message && (
-              <p className={`mt-2 text-sm ${
-                cpfValidation.isValid 
-                  ? 'text-green-600 dark:text-green-400' 
-                  : 'text-red-600 dark:text-red-400'
-              }`}>
-                {cpfValidation.message}
-              </p>
-            )}
-            
-          </div>
-          
-          <div>
-            <label className="block mb-2 font-medium text-stone-700 dark:text-stone-300">
-              Data de Nascimento *
-            </label>
-            <input
-              type="date"
-              value={formData.dataNascimento}
-              onChange={(e) => setFormData({...formData, dataNascimento: e.target.value})}
-              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800"
-              required
-            />
+            <div>
+              <label className="block mb-2 font-medium text-stone-700 dark:text-stone-300 flex items-center">
+                <Phone className="w-4 h-4 mr-2" />
+                Celular *
+              </label>
+              <input
+                type="tel"
+                value={formData.celular}
+                onChange={(e) => handleCelularChange(e.target.value)}
+                className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800 transition-all"
+                placeholder="(11) 99999-9999"
+                maxLength={15}
+                required
+              />
+            </div>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <label className="block mb-2 font-medium text-stone-700 dark:text-stone-300">
-              Email *
-            </label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
-              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800"
-              placeholder="seu.email@exemplo.com"
-              required
-            />
-          </div>
-          <div>
-            <label className="block mb-2 font-medium text-stone-700 dark:text-stone-300">
-              Celular *
-            </label>
-            <input
-              type="tel"
-              value={formData.celular}
-              onChange={(e) => handleCelularChange(e.target.value)}
-              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800"
-              placeholder="(11) 99999-9999"
-              maxLength={15} // (11) 99999-9999
-              required
-            />
-          </div>
-        </div>
-
-        {/* Aviso de validação do formulário */}
-        {cpfValidation.isValid === false && cpfValidation.message && (
-          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
-            <div className="flex items-center">
-              <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
-              <p className="text-red-700 dark:text-red-300 font-medium">
-                Corrija o CPF antes de continuar
-              </p>
-            </div>
-            <p className="text-red-600 dark:text-red-400 text-sm mt-1">
-              {cpfValidation.message}
-            </p>
-          </div>
-        )}
-
-        <div className="flex flex-col sm:flex-row gap-4 pt-4">
+        {/* Botões de ação */}
+        <div className="flex flex-col sm:flex-row gap-4 pt-8">
           <button 
             type="button" 
             onClick={onBack}
-            className="flex-1 px-6 py-3 border border-stone-300 dark:border-stone-600 rounded-md transition-colors bg-stone-100 hover:bg-stone-200 dark:bg-stone-700 dark:hover:bg-stone-600"
+            className="flex-1 flex items-center justify-center px-6 py-4 border border-stone-300 dark:border-stone-600 rounded-lg transition-all hover:bg-stone-50 dark:hover:bg-stone-700"
           >
-            Voltar
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar aos Eventos
           </button>
+          
           <button 
             type="submit"
-            disabled={isSubmitting || cpfValidation.isValid === false}
-            className={`flex-1 bg-purple-700 hover:bg-purple-800 text-white px-6 py-3 rounded-md transition-colors ${
-              isSubmitting || cpfValidation.isValid === false
-                ? 'opacity-50 cursor-not-allowed' 
-                : ''
+            disabled={isSubmitting || !isFormValid}
+            className={`flex-1 flex items-center justify-center px-6 py-4 rounded-lg transition-all font-medium ${
+              isSubmitting || !isFormValid
+                ? 'bg-stone-300 text-stone-500 cursor-not-allowed' 
+                : 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02]'
             }`}
           >
-            {isSubmitting ? 'Processando...' : 'Continuar para Pagamento'}
+            {isSubmitting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Processando...
+              </>
+            ) : (
+              <>
+                Continuar para Pagamento
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </>
+            )}
           </button>
         </div>
+
+        {/* Indicador de validação do formulário */}
+        {!isFormValid && Object.values(formData).some(value => value.trim()) && (
+          <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+            <div className="flex items-center">
+              <AlertCircle className="h-5 w-5 text-yellow-500 mr-2" />
+              <div>
+                <p className="text-yellow-700 dark:text-yellow-300 font-medium">
+                  Verifique os dados preenchidos
+                </p>
+                <ul className="text-yellow-600 dark:text-yellow-400 text-sm mt-1 space-y-1">
+                  {!formData.nome.trim() && <li>• Nome é obrigatório</li>}
+                  {!cpfValidation.isValid && <li>• CPF deve ser válido</li>}
+                  {!formData.email.trim() && <li>• Email é obrigatório</li>}
+                  {emailValidation === false && <li>• Email deve ser válido</li>}
+                  {!formData.celular.trim() && <li>• Celular é obrigatório</li>}
+                  {!formData.dataNascimento && <li>• Data de nascimento é obrigatória</li>}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
       </form>
     </div>
   );

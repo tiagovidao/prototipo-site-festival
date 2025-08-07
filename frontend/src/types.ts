@@ -1,4 +1,4 @@
-// src/types.ts
+// frontend/src/types/index.ts - Tipos atualizados
 export interface Event {
   id: string;
   title: string;
@@ -10,6 +10,7 @@ export interface Event {
   available: boolean;
   vacancies: number;
   totalVacancies: number;
+  currentRegistrations?: number;
 }
 
 export interface FormData {
@@ -35,11 +36,53 @@ export interface DonationForm {
   comprovantes: File[];
 }
 
-export type DonationStatus = 'idle' | 'uploading' | 'success' | 'error';
 export type LoadingState = 'idle' | 'loading' | 'success' | 'error';
+export type DonationStatus = 'idle' | 'uploading' | 'success' | 'error';
 
 export interface PaymentData {
   payment_id: string;
   status: string;
   method: string;
+  transaction_amount?: number;
+  date_approved?: string;
+}
+
+// Novos tipos para o sistema modular
+export interface InscricaoRegistration {
+  nome: string;
+  documento: string;
+  email: string;
+  celular: string;
+  dataNascimento: string;
+  selectedEvents: string[];
+  totalAmount: number;
+  paymentId?: string;
+  paymentStatus?: string;
+}
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+}
+
+// Tipos para o hook de inscrições
+export interface UseInscricoesState {
+  availableEvents: Event[];
+  selectedEvents: string[];
+  formData: FormData;
+  loadingState: LoadingState;
+  apiError: string;
+}
+
+export interface UseInscricoesActions {
+  loadEvents: () => Promise<void>;
+  selectEvent: (eventId: string) => void;
+  deselectEvent: (eventId: string) => void;
+  updateFormData: (data: Partial<FormData>) => void;
+  resetInscricoes: () => void;
+  calculateTotal: () => number;
+  isEventSelected: (eventId: string) => boolean;
+  getSelectedEventsDetails: () => Event[];
 }

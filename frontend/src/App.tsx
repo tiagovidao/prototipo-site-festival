@@ -1,10 +1,7 @@
-// App.tsx atualizado com fluxo de pagamento
+// App.tsx refatorado com arquitetura modular
 import React from 'react';
 import Home from './pages/HomePage';
-import Inscricoes from './pages/InscricoesPage';
-import Formulario from './pages/FormularioPage';
-import PaymentForm from './components/PaymentForm'; // Novo componente
-import PaymentSuccess from './pages/PaymentSuccessPage'; // Nova página
+import InscricoesFlow from './components/InscricoesFlow'; // Novo componente
 import Contato from './pages/ContatoPage';
 import Doacoes from './pages/DoacoesPage';
 import GenericPage from './pages/GenericPage';
@@ -13,37 +10,17 @@ import Footer from './components/Footer';
 import MenuItem from './components/MenuItem';
 import ApiService from './services/api';
 import { 
-  type Event, 
-  type FormData, 
   type ContactForm, 
   type DonationForm, 
-  type DonationStatus, 
-  type LoadingState, 
-  type PaymentData
+  type DonationStatus
 } from './types';
 
 const App = () => {
-  // Loading and error states
-  const [loadingState, setLoadingState] = React.useState<LoadingState>('loading');
-  const [apiError, setApiError] = React.useState<string>('');
-
-  // Navigation state
+  // Estados globais (não relacionados às inscrições)
   const [currentPage, setCurrentPage] = React.useState('home');
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
-  // Data states
-  const [availableEvents, setAvailableEvents] = React.useState<Event[]>([]);
-  const [selectedEvents, setSelectedEvents] = React.useState<string[]>([]);
-
-  // Form states
-  const [formData, setFormData] = React.useState<FormData>({ 
-    nome: '', 
-    documento: '', 
-    email: '', 
-    celular: '', 
-    dataNascimento: '' 
-  });
-
+  // Estados de contato
   const [contactForm, setContactForm] = React.useState<ContactForm>({ 
     nome: '', 
     email: '', 
@@ -52,19 +29,17 @@ const App = () => {
     escola: '', 
     mensagem: '' 
   });
-
+  
+  // Estados de doação
   const [donationForm, setDonationForm] = React.useState<DonationForm>({ 
     nome: '', 
     email: '', 
     comprovantes: [] 
   });
-
-  // Status states
   const [donationStatus, setDonationStatus] = React.useState<DonationStatus>('idle');
+  
+  // Estados gerais
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-
-  // Payment state - NOVO
-  const [paymentData, setPaymentData] = React.useState<PaymentData | null>(null);
 
   // Refs
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -82,54 +57,7 @@ const App = () => {
     { id: 'contato', label: 'Contato' }
   ];
 
-
-  // Load events on component mount
-  React.useEffect(() => {
-    const loadEvents = async () => {
-      try {
-        setLoadingState('loading');
-        setApiError('');
-        
-        const events = await ApiService.getEvents();
-        setAvailableEvents(events);
-        setLoadingState('success');
-      } catch (error) {
-        console.error('Erro ao carregar eventos:', error);
-        setApiError('Erro ao carregar eventos. Verifique sua conexão e tente novamente.');
-        setLoadingState('error');
-        
-        // Fallback para dados estáticos com preços atualizados
-        setAvailableEvents([
-          { id: 'e1a2b3c4-d5e6-f7g8-h9i0-j1k2l3m4n5o6', title: 'BALLET CLÁSSICO JÚNIOR', instructor: 'CLÁUDIA ZACCARI', date: '25/08/2025', time: '13:30 às 15:00h', location: 'SALA 01', price: 'R$ 15,00', available: true, vacancies: 3, totalVacancies: 7 },
-          { id: 'f2b3c4d5-e6f7-g8h9-i0j1-k2l3m4n5o6p7', title: 'BALLET CLÁSSICO PRÉ', instructor: 'CARIDAD MARTINEZ', date: '25/08/2025', time: '15:00 às 16:30h', location: 'SALA 01', price: 'R$ 15,00', available: true, vacancies: 5, totalVacancies: 7 },
-          { id: 'g3c4d5e6-f7g8-h9i0-j1k2-l3m4n5o6p7q8', title: 'BALLET CONTEMPORÂNEO', instructor: 'FELIPE SILVA', date: '26/08/2025', time: '10:00 às 12:00h', location: 'SALA 02', price: 'R$ 12,00', available: true, vacancies: 6, totalVacancies: 7 },
-          { id: 'h4d5e6f7-g8h9-i0j1-k2l3-m4n5o6p7q8r9', title: 'BALLET AVANÇADO', instructor: 'AMANDA COSTA', date: '27/08/2025', time: '14:00 às 16:00h', location: 'SALA 03', price: 'R$ 18,00', available: true, vacancies: 4, totalVacancies: 7 },
-          { id: 'i5e6f7g8-h9i0-j1k2-l3m4-n5o6p7q8r9s0', title: 'BALLET INFANTIL', instructor: 'RAFAEL SANTOS', date: '28/08/2025', time: '16:30 às 18:30h', location: 'SALA 01', price: 'R$ 10,00', available: true, vacancies: 7, totalVacancies: 7 },
-          { id: 'j6f7g8h9-i0j1-k2l3-m4n5-o6p7q8r9s0t1', title: 'BALLET INICIANTE', instructor: 'JULIANA OLIVEIRA', date: '29/08/2025', time: '09:00 às 11:00h', location: 'SALA 04', price: 'R$ 20,00', available: true, vacancies: 2, totalVacancies: 7 }
-        ]);
-      }
-    };
-
-    loadEvents();
-  }, []);
-
-  // Utility functions
-  const calculateTotal = (eventIds: string[]): number => {
-    return eventIds.reduce((total, eventId) => {
-      const event = availableEvents.find(e => e.id === eventId);
-      return total + (event ? parseFloat(event.price.replace('R$ ', '').replace(',', '.')) : 0);
-    }, 0);
-  };
-
-  const resetForms = () => {
-    setFormData({ nome: '', documento: '', email: '', celular: '', dataNascimento: '' });
-    setContactForm({ nome: '', email: '', telefone: '', cidade: '', escola: '', mensagem: '' });
-    setDonationForm({ nome: '', email: '', comprovantes: [] });
-    setSelectedEvents([]);
-    setPaymentData(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
+  // Funções utilitárias
   const showSuccessMessage = (message: string) => {
     alert(message);
   };
@@ -138,67 +66,16 @@ const App = () => {
     alert(message);
   };
 
-  // Event handlers
-  const handleEventSelection = (eventId: string) => {
-    const event = availableEvents.find(e => e.id === eventId);
-    if (!event || !event.available || event.vacancies <= 0) return;
-
-    setSelectedEvents(prev => 
-      prev.includes(eventId) 
-        ? prev.filter(id => id !== eventId) 
-        : [...prev, eventId]
-    );
+  const resetContactForm = () => {
+    setContactForm({ nome: '', email: '', telefone: '', cidade: '', escola: '', mensagem: '' });
   };
 
-  // NOVO: Handler para continuar para pagamento
-  const handleFormSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validation
-    const requiredFields = ['nome', 'documento', 'email', 'celular', 'dataNascimento'];
-    const missingFields = requiredFields.filter(field => !formData[field as keyof FormData]);
-    
-    if (missingFields.length > 0) {
-      showErrorMessage('Por favor, preencha todos os campos obrigatórios.');
-      return;
-    }
-
-    if (selectedEvents.length === 0) {
-      showErrorMessage('Por favor, selecione pelo menos um evento.');
-      return;
-    }
-
-    // Em vez de finalizar, ir para pagamento
-    setCurrentPage('payment');
+  const resetDonationForm = () => {
+    setDonationForm({ nome: '', email: '', comprovantes: [] });
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // NOVO: Handler para sucesso do pagamento
-  const handlePaymentSuccess = async (paymentInfo: PaymentData) => {
-  try {
-    setIsSubmitting(true);
-
-    const totalAmount = calculateTotal(selectedEvents);
-
-    // Criar inscrição após pagamento aprovado
-    await ApiService.createRegistration({
-      ...formData,
-      selectedEvents,
-      totalAmount,
-      paymentId: paymentInfo.payment_id,
-      paymentStatus: paymentInfo.status
-    });
-
-    setPaymentData(paymentInfo);
-    setCurrentPage('payment-success');
-
-  } catch (error) {
-    console.error('Erro ao finalizar inscrição:', error);
-    showErrorMessage(`Erro ao finalizar inscrição: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
+  // Handlers de contato
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -212,7 +89,7 @@ const App = () => {
     try {
       await ApiService.createContact(contactForm);
       showSuccessMessage('Mensagem enviada com sucesso!');
-      setContactForm({ nome: '', email: '', telefone: '', cidade: '', escola: '', mensagem: '' });
+      resetContactForm();
     } catch (error) {
       console.error('Erro ao enviar mensagem:', error);
       showErrorMessage(`Erro ao enviar mensagem: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
@@ -221,6 +98,7 @@ const App = () => {
     }
   };
 
+  // Handlers de doação
   const handleDonationSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -242,8 +120,7 @@ const App = () => {
 
       setDonationStatus('success');
       showSuccessMessage('Doação registrada com sucesso! Verificaremos seus comprovantes em breve.');
-      setDonationForm({ nome: '', email: '', comprovantes: [] });
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      resetDonationForm();
       
       setTimeout(() => setDonationStatus('idle'), 3000);
     } catch (error) {
@@ -271,166 +148,55 @@ const App = () => {
     }));
   };
 
+  // Navegação
   const navigateTo = (page: string) => {
     setCurrentPage(page);
     setIsMenuOpen(false);
     window.scrollTo(0, 0);
   };
 
-  const handleRetryLoadEvents = () => {
-    window.location.reload();
+  // Função para lidar com sucesso da inscrição
+  const handleInscricaoSuccess = () => {
+    showSuccessMessage('Inscrição realizada com sucesso!');
+    setCurrentPage('home');
   };
 
-  // Render loading state
-  if (loadingState === 'loading') {
-    return (
-      <div className="min-h-screen bg-stone-50 text-stone-800 dark:bg-stone-900 dark:text-stone-200 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <p className="text-lg">Carregando eventos...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Render error state
-  if (loadingState === 'error' && availableEvents.length === 0) {
-    return (
-      <div className="min-h-screen bg-stone-50 text-stone-800 dark:bg-stone-900 dark:text-stone-200 flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto px-4">
-          <div className="text-red-500 text-6xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold mb-4">Erro ao Carregar</h2>
-          <p className="text-stone-600 dark:text-stone-400 mb-6">{apiError}</p>
-          <button 
-            onClick={handleRetryLoadEvents}
-            className="bg-purple-700 hover:bg-purple-800 text-white px-6 py-3 rounded-md transition-colors"
-          >
-            Tentar Novamente
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Render content based on current page
+  // Renderização do conteúdo baseado na página atual
   const renderContent = () => {
-    // Show API error banner if there's an error but we have fallback data
-    const ErrorBanner = apiError && (
-      <div className="bg-yellow-100 dark:bg-yellow-900/20 border-l-4 border-yellow-500 p-4 mb-4">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <div className="ml-3">
-            <p className="text-sm text-yellow-700 dark:text-yellow-200">
-              {apiError} Usando dados em cache.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-
     switch (currentPage) {
       case 'home': 
-        return (
-          <>
-            {ErrorBanner}
-            <Home navigateTo={navigateTo} />
-          </>
-        );
+        return <Home navigateTo={navigateTo} />;
         
-      case 'inscricoes': 
+      // Todas as páginas relacionadas às inscrições agora são um fluxo isolado
+      case 'inscricoes':
         return (
-          <>
-            {ErrorBanner}
-            <Inscricoes 
-              availableEvents={availableEvents}
-              selectedEvents={selectedEvents}
-              handleEventSelection={handleEventSelection}
-              onContinue={() => setCurrentPage('formulario')}
-            />
-          </>
-        );
-        
-      case 'formulario': 
-        return (
-          <>
-            {ErrorBanner}
-            <Formulario 
-              selectedEvents={selectedEvents}
-              availableEvents={availableEvents}
-              formData={formData}
-              setFormData={setFormData}
-              handleFormSubmit={handleFormSubmit}
-              onBack={() => setCurrentPage('inscricoes')}
-              isSubmitting={isSubmitting}
-            />
-          </>
-        );
-
-      // NOVA PÁGINA DE PAGAMENTO
-      case 'payment':
-        return (
-          <>
-            {ErrorBanner}
-            <PaymentForm 
-              selectedEvents={selectedEvents}
-              availableEvents={availableEvents}
-              formData={formData}
-              onPaymentSuccess={handlePaymentSuccess}
-              onBack={() => setCurrentPage('formulario')}
-              totalAmount={calculateTotal(selectedEvents)}
-            />
-          </>
-        );
-
-      // NOVA PÁGINA DE SUCESSO
-      case 'payment-success':
-        return (
-          <>
-            {ErrorBanner}
-            <PaymentSuccess 
-              paymentData={paymentData}
-              selectedEvents={selectedEvents}
-              availableEvents={availableEvents}
-              formData={formData}
-              onNewRegistration={() => {
-                resetForms();
-                setCurrentPage('home');
-              }}
-            />
-          </>
+          <InscricoesFlow 
+            onSuccess={handleInscricaoSuccess}
+            onCancel={() => setCurrentPage('home')}
+          />
         );
         
       case 'contato': 
         return (
-          <>
-            {ErrorBanner}
-            <Contato 
-              contactForm={contactForm}
-              setContactForm={setContactForm}
-              handleContactSubmit={handleContactSubmit}
-              isSubmitting={isSubmitting}
-            />
-          </>
+          <Contato 
+            contactForm={contactForm}
+            setContactForm={setContactForm}
+            handleContactSubmit={handleContactSubmit}
+            isSubmitting={isSubmitting}
+          />
         );
         
       case 'doacoes': 
         return (
-          <>
-            {ErrorBanner}
-            <Doacoes 
-              donationForm={donationForm}
-              setDonationForm={setDonationForm}
-              donationStatus={donationStatus}
-              handleDonationSubmit={handleDonationSubmit}
-              handleFileChange={handleFileChange}
-              handleRemoveFile={handleRemoveFile}
-              fileInputRef={fileInputRef}
-            />
-          </>
+          <Doacoes 
+            donationForm={donationForm}
+            setDonationForm={setDonationForm}
+            donationStatus={donationStatus}
+            handleDonationSubmit={handleDonationSubmit}
+            handleFileChange={handleFileChange}
+            handleRemoveFile={handleRemoveFile}
+            fileInputRef={fileInputRef}
+          />
         );
         
       case 'festival':
@@ -439,19 +205,11 @@ const App = () => {
       case 'edicoes':
       case 'oportunidades':
         return (
-          <>
-            {ErrorBanner}
-            <GenericPage title={menuItems.find(item => item.id === currentPage)?.label || currentPage} />
-          </>
+          <GenericPage title={menuItems.find(item => item.id === currentPage)?.label || currentPage} />
         );
         
       default: 
-        return (
-          <>
-            {ErrorBanner}
-            <Home navigateTo={navigateTo} />
-          </>
-        );
+        return <Home navigateTo={navigateTo} />;
     }
   };
 

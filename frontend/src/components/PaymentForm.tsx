@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CreditCard, QrCode, ArrowLeft, Loader2, CheckCircle2 } from 'lucide-react';
+import { CreditCard, QrCode, ArrowLeft, Loader2, CheckCircle2, Copy, TestTube } from 'lucide-react';
 import type { Event, FormData } from '../types';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production'
@@ -41,6 +41,15 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   });
   const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'pending' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Dados de teste para cartão
+  const testCardData = {
+    number: '5031 4332 1540 6351',
+    cvc: '123',
+    expiry: '11/30',
+    cpf: '12345678909',
+    name: 'TESTE CARTAO'
+  };
 
   // Criar preferência de pagamento
   const createPaymentPreference = async (method: 'credit_card' | 'pix') => {
@@ -132,7 +141,6 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           });
         }, 1500);
       } else if (status.status === 'pending') {
-        // Continuar verificando após 3 segundos
         setTimeout(() => pollPixPayment(paymentId), 3000);
       } else {
         setErrorMessage('Pagamento não aprovado. Tente novamente.');
@@ -140,7 +148,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       }
     } catch (error) {
       console.error('Erro ao verificar pagamento:', error);
-      }
+    }
   };
 
   // Processar pagamento com cartão
@@ -184,6 +192,28 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       console.error('Erro no pagamento:', error);
       setErrorMessage(error instanceof Error ? error.message : 'Erro desconhecido');
       setPaymentStatus('error');
+    }
+  };
+
+  // Função para preencher dados de teste
+  const fillTestData = () => {
+    setCardData({
+      number: testCardData.number,
+      expiry: testCardData.expiry,
+      cvc: testCardData.cvc,
+      name: testCardData.name,
+      cpf: testCardData.cpf
+    });
+  };
+
+  // Função para copiar um valor específico
+  const copyToClipboard = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      // Você pode adicionar uma notificação visual aqui se desejar
+      console.log(`${field} copiado: ${text}`);
+    } catch (err) {
+      console.error('Erro ao copiar:', err);
     }
   };
 
@@ -356,6 +386,85 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           {paymentStatus === 'idle' || paymentStatus === 'error' ? (
             <>
               <h3 className="text-xl font-semibold mb-4">Pagamento com Cartão de Crédito</h3>
+              
+              {/* Dados de Teste - Card de destaque */}
+              <div className="bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-orange-900/20 dark:to-yellow-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center">
+                    <TestTube className="w-5 h-5 mr-2 text-orange-600" />
+                    <h4 className="font-semibold text-orange-800 dark:text-orange-200">Dados para Teste</h4>
+                  </div>
+                  <button
+                    onClick={fillTestData}
+                    className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-sm transition-colors flex items-center"
+                  >
+                    <TestTube className="w-4 h-4 mr-1" />
+                    Preencher
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  <div className="flex items-center justify-between bg-white dark:bg-stone-700 p-2 rounded border">
+                    <div>
+                      <span className="text-stone-500 text-xs">Número:</span>
+                      <div className="font-mono font-bold">{testCardData.number}</div>
+                    </div>
+                    <button
+                      onClick={() => copyToClipboard(testCardData.number.replace(/\s/g, ''), 'Número')}
+                      className="text-orange-600 hover:text-orange-700 transition-colors p-1"
+                      title="Copiar número"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </div>
+                  
+                  <div className="flex items-center justify-between bg-white dark:bg-stone-700 p-2 rounded border">
+                    <div>
+                      <span className="text-stone-500 text-xs">CVV:</span>
+                      <div className="font-mono font-bold">{testCardData.cvc}</div>
+                    </div>
+                    <button
+                      onClick={() => copyToClipboard(testCardData.cvc, 'CVV')}
+                      className="text-orange-600 hover:text-orange-700 transition-colors p-1"
+                      title="Copiar CVV"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </div>
+                  
+                  <div className="flex items-center justify-between bg-white dark:bg-stone-700 p-2 rounded border">
+                    <div>
+                      <span className="text-stone-500 text-xs">Validade:</span>
+                      <div className="font-mono font-bold">{testCardData.expiry}</div>
+                    </div>
+                    <button
+                      onClick={() => copyToClipboard(testCardData.expiry, 'Validade')}
+                      className="text-orange-600 hover:text-orange-700 transition-colors p-1"
+                      title="Copiar validade"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </div>
+                  
+                  <div className="flex items-center justify-between bg-white dark:bg-stone-700 p-2 rounded border">
+                    <div>
+                      <span className="text-stone-500 text-xs">CPF:</span>
+                      <div className="font-mono font-bold">{testCardData.cpf}</div>
+                    </div>
+                    <button
+                      onClick={() => copyToClipboard(testCardData.cpf, 'CPF')}
+                      className="text-orange-600 hover:text-orange-700 transition-colors p-1"
+                      title="Copiar CPF"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                
+                <p className="text-xs text-orange-700 dark:text-orange-300 mt-2 font-medium">
+                  ⚠️ Use estes dados apenas para teste. Não são cartões reais.
+                </p>
+              </div>
               
               <div>
                 <label className="block mb-2 font-medium">Número do cartão</label>
