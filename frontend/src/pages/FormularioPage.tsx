@@ -193,13 +193,6 @@ const Formulario: React.FC<FormularioProps> = ({
   return (
     <div className="max-w-3xl mx-auto px-4 py-16">
       <div className="mb-8">
-        <button 
-          onClick={onBack}
-          className="flex items-center text-purple-700 hover:text-purple-800 transition-colors mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Voltar aos eventos
-        </button>
         
         <h1 className="font-serif text-4xl md:text-5xl mb-4 text-center">
           Formulário de Inscrição
