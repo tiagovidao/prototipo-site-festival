@@ -1,17 +1,14 @@
-// frontend/src/pages/FormularioPage.tsx - Reescrito com validação
-import React, { useState, useCallback, useEffect } from 'react';
+// frontend/src/pages/FormularioPage.tsx - Validação apenas no submit
+import React, { useState, useCallback } from 'react';
 import ApiService from '../services/api';
 import { 
-  AlertCircle, 
-  CheckCircle, 
   ArrowLeft, 
   ArrowRight, 
   User, 
   Mail, 
   Phone, 
   Calendar, 
-  CreditCard, 
-  AlertTriangle 
+  CreditCard 
 } from 'lucide-react';
 
 // Tipos
@@ -40,80 +37,8 @@ interface FormularioProps {
   isSubmitting: boolean;
 }
 
-// Hook para validação de duplicatas
-const useRegistrationValidation = () => {
-  const [validationState, setValidationState] = useState<{
-    isValidating: boolean;
-    isValid: boolean | null;
-    conflicts: { type: 'documento' | 'email'; value: string }[];
-    message: string;
-  }>({ 
-    isValidating: false, 
-    isValid: null, 
-    conflicts: [],
-    message: '' 
-  });
-
-  const validateRegistration = useCallback(async (documento: string, email: string) => {
-    if (!documento.trim() || !email.trim()) {
-      setValidationState({
-        isValidating: false,
-        isValid: null,
-        conflicts: [],
-        message: ''
-      });
-      return;
-    }
-
-    setValidationState(prev => ({
-      ...prev,
-      isValidating: true,
-      message: 'Verificando se os dados já foram utilizados...'
-    }));
-
-    try {
-      const result = await ApiService.validateRegistrationData(documento, email);
-      
-      if (result.isValid) {
-        setValidationState({
-          isValidating: false,
-          isValid: true,
-          conflicts: [],
-          message: '✅ Dados disponíveis para inscrição'
-        });
-      } else {
-        const conflictMessages = result.conflicts.map(conflict => {
-          return `${conflict.type === 'documento' ? 'CPF' : 'E-mail'} já utilizado`;
-        });
-        
-        setValidationState({
-          isValidating: false,
-          isValid: false,
-          conflicts: result.conflicts,
-          message: `❌ ${conflictMessages.join(' e ')}`
-        });
-      }
-    } catch (error) {
-      console.error('Erro na validação:', error);
-      setValidationState({
-        isValidating: false,
-        isValid: null,
-        conflicts: [],
-        message: '⚠️ Não foi possível validar os dados. Você pode continuar.'
-      });
-    }
-  }, []);
-
-  return { validationState, validateRegistration };
-};
-
 // Hook para validação de CPF
 const useCPFValidation = () => {
-  const [validation, setValidation] = useState<{
-    isValid: boolean | null;
-    message: string;
-  }>({ isValid: null, message: '' });
-
   const formatCPF = useCallback((value: string): string => {
     const numbers = value.replace(/\D/g, '').slice(0, 11);
     
@@ -123,23 +48,17 @@ const useCPFValidation = () => {
     return numbers.replace(/(\d{3})(\d{3})(\d{3})(\d+)/, '$1.$2.$3-$4');
   }, []);
 
-  const validateCPF = useCallback((cpf: string): { isValid: boolean; message: string } => {
+  const validateCPF = useCallback((cpf: string): boolean => {
     const numbers = cpf.replace(/\D/g, '');
-    
-    if (numbers.length === 0) return { isValid: false, message: '' };
-    if (numbers.length < 11) return { isValid: false, message: 'CPF deve ter 11 dígitos' };
-    
-    return { isValid: true, message: 'CPF válido' };
+    return numbers.length === 11;
   }, []);
 
   const handleCPFChange = (value: string, setFormData: (data: FormDataType) => void, formData: FormDataType) => {
     const formattedValue = formatCPF(value);
     setFormData({ ...formData, documento: formattedValue });
-    const validationResult = validateCPF(formattedValue);
-    setValidation(validationResult);
   };
 
-  return { validation, handleCPFChange };
+  return { validateCPF, handleCPFChange };
 };
 
 // Componente principal
@@ -152,10 +71,8 @@ const Formulario: React.FC<FormularioProps> = ({
   onBack,
   isSubmitting
 }) => {
-  const { validation: cpfValidation, handleCPFChange } = useCPFValidation();
-  const { validationState, validateRegistration } = useRegistrationValidation();
-  const [emailValidation, setEmailValidation] = useState<boolean | null>(null);
-  const [hasTriedValidation, setHasTriedValidation] = useState(false);
+  const { validateCPF, handleCPFChange } = useCPFValidation();
+  const [isValidating, setIsValidating] = useState(false);
 
   // Formatar celular
   const formatCelular = useCallback((value: string): string => {
@@ -173,74 +90,96 @@ const Formulario: React.FC<FormularioProps> = ({
     return emailRegex.test(email);
   }, []);
 
-  // Trigger de validação com debounce
-  useEffect(() => {
-    if (cpfValidation.isValid && emailValidation === true && formData.documento && formData.email) {
-      const timeoutId = setTimeout(() => {
-        validateRegistration(formData.documento, formData.email);
-      }, 800);
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, [cpfValidation.isValid, emailValidation, formData.documento, formData.email, validateRegistration]);
-
-  // Handlers
+  // Handler para celular
   const handleCelularChange = useCallback((value: string) => {
     const formattedValue = formatCelular(value);
     setFormData({ ...formData, celular: formattedValue });
   }, [formatCelular, formData, setFormData]);
 
+  // Handler para email
   const handleEmailChange = useCallback((value: string) => {
     setFormData({ ...formData, email: value });
-    if (value) {
-      setEmailValidation(validateEmail(value));
-    } else {
-      setEmailValidation(null);
-    }
-  }, [formData, setFormData, validateEmail]);
+  }, [formData, setFormData]);
 
-  const handleSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    setHasTriedValidation(true);
-    
-    // Validações básicas
-    if (!cpfValidation.isValid) {
-      alert('Por favor, insira um CPF válido.');
-      return;
-    }
-
-    if (emailValidation === false) {
-      alert('Por favor, insira um email válido.');
-      return;
-    }
-
+  // Validação completa do formulário
+  const validateForm = (): { isValid: boolean; message?: string } => {
+    // Verificar campos obrigatórios
     const requiredFields = ['nome', 'documento', 'email', 'celular', 'dataNascimento'];
     const missingFields = requiredFields.filter(field => !formData[field as keyof typeof formData]?.trim());
     
     if (missingFields.length > 0) {
-      alert('Por favor, preencha todos os campos obrigatórios.');
-      return;
+      return { isValid: false, message: 'Por favor, preencha todos os campos obrigatórios.' };
     }
 
-    // Validação de duplicatas
-    if (validationState.isValid === false) {
-      const conflictMessages = validationState.conflicts.map(conflict => {
-        return conflict.type === 'documento' 
-          ? 'Este CPF já foi utilizado em outra inscrição' 
-          : 'Este e-mail já foi utilizado em outra inscrição';
-      });
+    // Validar CPF
+    if (!validateCPF(formData.documento)) {
+      return { isValid: false, message: 'Por favor, insira um CPF válido (11 dígitos).' };
+    }
+
+    // Validar email
+    if (!validateEmail(formData.email)) {
+      return { isValid: false, message: 'Por favor, insira um email válido.' };
+    }
+
+    // Verificar se há eventos selecionados
+    if (selectedEvents.length === 0) {
+      return { isValid: false, message: 'Por favor, selecione pelo menos um evento.' };
+    }
+
+    return { isValid: true };
+  };
+
+  // Validar duplicatas na API
+  const validateDuplicates = async (): Promise<{ isValid: boolean; message?: string }> => {
+    try {
+      const result = await ApiService.validateRegistrationData(formData.documento, formData.email);
       
-      alert(`❌ Não é possível continuar:\n\n${conflictMessages.join('\n')}\n\nPor favor, verifique seus dados ou entre em contato conosco.`);
+      if (!result.isValid) {
+        const conflictMessages = result.conflicts.map(conflict => {
+          return conflict.type === 'documento' 
+            ? 'Este CPF já foi utilizado em outra inscrição' 
+            : 'Este e-mail já foi utilizado em outra inscrição';
+        });
+        
+        return { 
+          isValid: false, 
+          message: `Não é possível continuar:\n\n${conflictMessages.join('\n')}\n\nPor favor, verifique seus dados ou entre em contato conosco.`
+        };
+      }
+
+      return { isValid: true };
+    } catch (error) {
+      console.error('Erro na validação de duplicatas:', error);
+      // Em caso de erro na validação, permitir continuar (fail-safe)
+      return { isValid: true };
+    }
+  };
+
+  // Handler do submit
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Primeira validação: campos básicos
+    const basicValidation = validateForm();
+    if (!basicValidation.isValid) {
+      alert(basicValidation.message);
       return;
     }
 
-    if (validationState.isValidating) {
-      alert('Aguarde a validação dos seus dados...');
+    // Segunda validação: duplicatas na API
+    setIsValidating(true);
+    
+    const duplicateValidation = await validateDuplicates();
+    setIsValidating(false);
+    
+    if (!duplicateValidation.isValid) {
+      alert(duplicateValidation.message);
       return;
     }
     
+    // Se chegou até aqui, tudo está válido
     handleFormSubmit(e);
-  }, [cpfValidation, emailValidation, formData, handleFormSubmit, validationState]);
+  }, [formData, selectedEvents, handleFormSubmit, validateCPF, validateEmail]);
 
   // Calcular total
   const total = selectedEvents.reduce((sum, eventId) => {
@@ -248,12 +187,8 @@ const Formulario: React.FC<FormularioProps> = ({
     return sum + (event ? parseFloat(event.price.replace('R$ ', '').replace(',', '.')) : 0);
   }, 0);
 
-  // Verificar se o formulário está válido
-  const isFormValid = cpfValidation.isValid && 
-    emailValidation !== false && 
-    Object.values(formData).every(value => value.trim()) &&
-    validationState.isValid !== false &&
-    !validationState.isValidating;
+  // Verificar se o formulário básico está preenchido (para habilitar/desabilitar botão)
+  const isFormFilled = Object.values(formData).every(value => value.trim()) && selectedEvents.length > 0;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-16">
@@ -336,42 +271,15 @@ const Formulario: React.FC<FormularioProps> = ({
                 <CreditCard className="w-4 h-4 mr-2" />
                 CPF *
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={formData.documento}
-                  onChange={(e) => handleCPFChange(e.target.value, setFormData, formData)}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent bg-white dark:bg-stone-800 pr-10 transition-all ${
-                    cpfValidation.isValid === null
-                      ? 'border-stone-300 dark:border-stone-600 focus:ring-purple-500'
-                      : cpfValidation.isValid
-                      ? 'border-green-300 dark:border-green-600 focus:ring-green-500'
-                      : 'border-red-300 dark:border-red-600 focus:ring-red-500'
-                  }`}
-                  placeholder="000.000.000-00"
-                  maxLength={14}
-                  required
-                />
-                
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  {cpfValidation.isValid === true && (
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                  )}
-                  {cpfValidation.isValid === false && cpfValidation.message && (
-                    <AlertCircle className="h-5 w-5 text-red-500" />
-                  )}
-                </div>
-              </div>
-              
-              {cpfValidation.message && (
-                <p className={`mt-2 text-sm ${
-                  cpfValidation.isValid 
-                    ? 'text-green-600 dark:text-green-400' 
-                    : 'text-red-600 dark:text-red-400'
-                }`}>
-                  {cpfValidation.message}
-                </p>
-              )}
+              <input
+                type="text"
+                value={formData.documento}
+                onChange={(e) => handleCPFChange(e.target.value, setFormData, formData)}
+                className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800 transition-all"
+                placeholder="000.000.000-00"
+                maxLength={14}
+                required
+              />
             </div>
             
             <div>
@@ -396,37 +304,14 @@ const Formulario: React.FC<FormularioProps> = ({
                 <Mail className="w-4 h-4 mr-2" />
                 Email *
               </label>
-              <div className="relative">
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => handleEmailChange(e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent bg-white dark:bg-stone-800 pr-10 transition-all ${
-                    emailValidation === null
-                      ? 'border-stone-300 dark:border-stone-600 focus:ring-purple-500'
-                      : emailValidation
-                      ? 'border-green-300 dark:border-green-600 focus:ring-green-500'
-                      : 'border-red-300 dark:border-red-600 focus:ring-red-500'
-                  }`}
-                  placeholder="seu.email@exemplo.com"
-                  required
-                />
-                
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  {emailValidation === true && (
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                  )}
-                  {emailValidation === false && (
-                    <AlertCircle className="h-5 w-5 text-red-500" />
-                  )}
-                </div>
-              </div>
-              
-              {emailValidation === false && (
-                <p className="mt-2 text-sm text-red-600 dark:text-red-400">
-                  Email inválido
-                </p>
-              )}
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleEmailChange(e.target.value)}
+                className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800 transition-all"
+                placeholder="seu.email@exemplo.com"
+                required
+              />
             </div>
             
             <div>
@@ -447,52 +332,6 @@ const Formulario: React.FC<FormularioProps> = ({
           </div>
         </div>
 
-        {/* Status da validação de duplicatas */}
-        {(validationState.isValidating || validationState.message) && (
-          <div className={`p-4 rounded-lg border ${
-            validationState.isValidating
-              ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
-              : validationState.isValid === true
-              ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-              : validationState.isValid === false
-              ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-              : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
-          }`}>
-            <div className="flex items-center">
-              {validationState.isValidating ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
-              ) : validationState.isValid === true ? (
-                <CheckCircle className="h-5 w-5 text-green-600 mr-3" />
-              ) : validationState.isValid === false ? (
-                <AlertTriangle className="h-5 w-5 text-red-600 mr-3" />
-              ) : (
-                <AlertCircle className="h-5 w-5 text-yellow-600 mr-3" />
-              )}
-              
-              <div>
-                <p className={`font-medium ${
-                  validationState.isValidating
-                    ? 'text-blue-700 dark:text-blue-300'
-                    : validationState.isValid === true
-                    ? 'text-green-700 dark:text-green-300'
-                    : validationState.isValid === false
-                    ? 'text-red-700 dark:text-red-300'
-                    : 'text-yellow-700 dark:text-yellow-300'
-                }`}>
-                  {validationState.message}
-                </p>
-                
-                {validationState.isValid === false && validationState.conflicts.length > 0 && (
-                  <div className="mt-2 text-sm text-red-600 dark:text-red-400">
-                    <p>Se você já se inscreveu antes, entre em contato conosco.</p>
-                    <p>Se estes dados estão sendo usados por outra pessoa, verifique as informações.</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Botões de ação */}
         <div className="flex flex-col sm:flex-row gap-4 pt-8">
           <button 
@@ -506,9 +345,9 @@ const Formulario: React.FC<FormularioProps> = ({
           
           <button 
             type="submit"
-            disabled={isSubmitting || !isFormValid || validationState.isValidating}
+            disabled={isSubmitting || !isFormFilled || isValidating}
             className={`flex-1 flex items-center justify-center px-6 py-4 rounded-lg transition-all font-medium ${
-              isSubmitting || !isFormValid || validationState.isValidating
+              isSubmitting || !isFormFilled || isValidating
                 ? 'bg-stone-300 text-stone-500 cursor-not-allowed' 
                 : 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white shadow-lg hover:shadow-xl transform hover:scale-[1.02]'
             }`}
@@ -518,10 +357,10 @@ const Formulario: React.FC<FormularioProps> = ({
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                 Processando...
               </>
-            ) : validationState.isValidating ? (
+            ) : isValidating ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-stone-400 mr-2"></div>
-                Validando dados...
+                Validando...
               </>
             ) : (
               <>
@@ -531,29 +370,6 @@ const Formulario: React.FC<FormularioProps> = ({
             )}
           </button>
         </div>
-
-        {/* Indicador de validação do formulário */}
-        {!isFormValid && hasTriedValidation && (
-          <div className="mt-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-            <div className="flex items-center">
-              <AlertCircle className="h-5 w-5 text-yellow-500 mr-2" />
-              <div>
-                <p className="text-yellow-700 dark:text-yellow-300 font-medium">
-                  Verifique os dados preenchidos
-                </p>
-                <ul className="text-yellow-600 dark:text-yellow-400 text-sm mt-1 space-y-1">
-                  {!formData.nome.trim() && <li>• Nome é obrigatório</li>}
-                  {!cpfValidation.isValid && <li>• CPF deve ser válido</li>}
-                  {!formData.email.trim() && <li>• Email é obrigatório</li>}
-                  {emailValidation === false && <li>• Email deve ser válido</li>}
-                  {!formData.celular.trim() && <li>• Celular é obrigatório</li>}
-                  {!formData.dataNascimento && <li>• Data de nascimento é obrigatória</li>}
-                  {validationState.isValid === false && <li>• Dados já utilizados em outra inscrição</li>}
-                </ul>
-              </div>
-            </div>
-          </div>
-        )}
       </form>
     </div>
   );

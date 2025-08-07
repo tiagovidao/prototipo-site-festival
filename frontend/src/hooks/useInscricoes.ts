@@ -1,13 +1,7 @@
-// frontend/src/hooks/useInscricoes.ts - ATUALIZADO com validação
+// frontend/src/hooks/useInscricoes.ts - Simplificado sem validação em tempo real
 import { useState, useCallback } from 'react';
 import ApiService from '../services/api';
 import { type Event, type FormData, type LoadingState } from '../types';
-
-// Interfaces para validação
-export interface ValidationResult {
-  isValid: boolean;
-  conflicts: { type: 'documento' | 'email'; value: string; status?: string }[];
-}
 
 export interface UseInscricoesState {
   availableEvents: Event[];
@@ -134,18 +128,6 @@ export const useInscricoes = () => {
     return hasSelectedEvents && hasValidFormData;
   }, [state.selectedEvents, state.formData]);
 
-  // Validar dados de registro (nova função)
-  const validateRegistrationData = useCallback(async (documento: string, email: string): Promise<ValidationResult> => {
-    try {
-      const result = await ApiService.validateRegistrationData(documento, email);
-      return result;
-    } catch (error) {
-      console.error('Erro na validação:', error);
-      // Em caso de erro, permitir continuar (fail-safe)
-      return { isValid: true, conflicts: [] };
-    }
-  }, []);
-
   return {
     // Estado
     availableEvents: state.availableEvents,
@@ -165,7 +147,6 @@ export const useInscricoes = () => {
     calculateTotal,
     isEventSelected,
     getSelectedEventsDetails,
-    canProceedToPayment,
-    validateRegistrationData
+    canProceedToPayment
   };
 };

@@ -1,4 +1,4 @@
-// frontend/src/components/InscricoesFlow.tsx
+// frontend/src/components/InscricoesFlow.tsx - Com mensagem de cancelamento
 import React, { useEffect } from 'react';
 import { useInscricoes } from '../hooks/useInscricoes';
 import Inscricoes from '../pages/InscricoesPage';
@@ -7,6 +7,7 @@ import PaymentForm from './PaymentForm';
 import PaymentSuccess from '../pages/PaymentSuccessPage';
 import ApiService from '../services/api';
 import { type PaymentData } from '../types';
+import { Mail, AlertCircle } from 'lucide-react';
 
 interface InscricoesFlowProps {
   onSuccess: () => void;
@@ -132,6 +133,38 @@ const InscricoesFlow: React.FC<InscricoesFlowProps> = ({ onCancel }) => {
     onCancel();
   };
 
+  // Componente da mensagem de cancelamento
+  const CancelationNotice = () => (
+    <div className="max-w-4xl mx-auto px-4 mb-6">
+      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+        <div className="flex items-start">
+          <AlertCircle className="w-5 h-5 text-amber-500 mr-3 mt-0.5 flex-shrink-0" />
+          <div className="flex-1">
+            <h3 className="font-medium text-amber-800 dark:text-amber-200 mb-2">
+              Já possui uma inscrição?
+            </h3>
+            <p className="text-sm text-amber-700 dark:text-amber-300 mb-3">
+              Se você já se inscreveu anteriormente e deseja cancelar sua participação, entre em contato conosco através do e-mail oficial.
+            </p>
+            <div className="flex items-center space-x-4">
+              <a 
+                href="mailto:contato@festivalcultural.com?subject=Solicitação de Cancelamento de Inscrição&body=Olá,%0A%0ASolicito o cancelamento da minha inscrição no Festival de Ballet.%0A%0ADados para identificação:%0ANome:%0ACPF:%0AE-mail utilizado na inscrição:%0A%0AMotivo do cancelamento:%0A%0AObrigado(a)."
+                className="inline-flex items-center text-amber-700 dark:text-amber-300 hover:text-amber-800 dark:hover:text-amber-200 font-medium text-sm transition-colors"
+              >
+                <Mail className="w-4 h-4 mr-2" />
+                contato@festivalcultural.com
+              </a>
+            </div>
+            <div className="mt-3 text-xs text-amber-600 dark:text-amber-400">
+              <p><strong>Inclua em seu e-mail:</strong> Nome completo, CPF, e-mail usado na inscrição e motivo do cancelamento.</p>
+              <p><strong>Prazo:</strong> Cancelamentos devem ser solicitados até 24 horas antes do evento.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   // Render do banner de erro da API se necessário
   const ErrorBanner = apiError && (
     <div className="bg-yellow-100 dark:bg-yellow-900/20 border-l-4 border-yellow-500 p-4 mb-4">
@@ -196,7 +229,7 @@ const InscricoesFlow: React.FC<InscricoesFlowProps> = ({ onCancel }) => {
 
       case 'events':
         return (
-          <>
+          <div>
             {ErrorBanner}
             <Inscricoes 
               availableEvents={availableEvents}
@@ -204,12 +237,13 @@ const InscricoesFlow: React.FC<InscricoesFlowProps> = ({ onCancel }) => {
               handleEventSelection={handleEventSelection}
               onContinue={handleContinueToForm}
             />
-          </>
+            <CancelationNotice />
+          </div>
         );
 
       case 'form':
         return (
-          <>
+          <div>
             {ErrorBanner}
             <Formulario 
               selectedEvents={selectedEvents}
@@ -220,12 +254,13 @@ const InscricoesFlow: React.FC<InscricoesFlowProps> = ({ onCancel }) => {
               onBack={() => setCurrentStep('events')}
               isSubmitting={isSubmitting}
             />
-          </>
+            <CancelationNotice />
+          </div>
         );
 
       case 'payment':
         return (
-          <>
+          <div>
             {ErrorBanner}
             <PaymentForm 
               selectedEvents={selectedEvents}
@@ -235,12 +270,13 @@ const InscricoesFlow: React.FC<InscricoesFlowProps> = ({ onCancel }) => {
               onBack={() => setCurrentStep('form')}
               totalAmount={calculateTotal()}
             />
-          </>
+            <CancelationNotice />
+          </div>
         );
 
       case 'success':
         return (
-          <>
+          <div>
             {ErrorBanner}
             <PaymentSuccess 
               paymentData={paymentData}
@@ -249,7 +285,7 @@ const InscricoesFlow: React.FC<InscricoesFlowProps> = ({ onCancel }) => {
               formData={formData}
               onNewRegistration={handleNewRegistration}
             />
-          </>
+          </div>
         );
 
       default:
