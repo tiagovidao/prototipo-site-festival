@@ -7,13 +7,19 @@ const morgan = require('morgan');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// 🌍 CORS configurado para Render + Netlify
+// 🌍 CORS configurado para Render + Netlify + Vercel
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
   'http://localhost:8080',
   'https://festival-admin.netlify.app',
   'https://festival-admin.onrender.com',
+  // 🔥 VERCEL URLS - TODAS AS VARIAÇÕES
+  'https://prototipo-site-festival-7gln.vercel.app',
+  'https://prototipo-site-festival.vercel.app', // ✅ ADICIONADA
+  'https://prototipo-site-festival-7gln-git-main.vercel.app',
+  'https://prototipo-site-festival-7gln-git-desenvolvimento.vercel.app',
+  'https://prototipo-site-festival-git-desenvolvimento.vercel.app',
   // Adicione outros domínios conforme necessário
   process.env.FRONTEND_URL,
   process.env.CORS_ORIGINS?.split(',') || []
@@ -29,7 +35,7 @@ app.use(helmet({
 
 app.use(morgan('combined'));
 
-// 🔧 CORS robusta para produção
+// 🔧 CORS robusta para produção - MELHORADA
 app.use(cors({
   origin: function (origin, callback) {
     // Permitir requests sem origin (mobile apps, Postman, etc.)
@@ -40,12 +46,15 @@ app.use(cors({
       origin === allowed || 
       origin.startsWith(allowed) ||
       (allowed.includes('netlify.app') && origin.includes('netlify.app')) ||
-      (allowed.includes('onrender.com') && origin.includes('onrender.com'))
+      (allowed.includes('onrender.com') && origin.includes('onrender.com')) ||
+      // 🆕 WILDCARD PARA VERCEL
+      (allowed.includes('vercel.app') && origin.includes('vercel.app') && origin.includes('prototipo-site-festival'))
     )) {
       return callback(null, true);
     }
     
     console.warn('❌ CORS bloqueado para origin:', origin);
+    console.warn('📋 Origins permitidas:', allowedOrigins);
     callback(new Error('Não permitido pelo CORS'));
   },
   credentials: true,
@@ -58,7 +67,9 @@ app.use(cors({
     'Origin'
   ],
   exposedHeaders: ['Content-Range', 'X-Content-Range'],
-  maxAge: 86400 // 24 horas de cache para preflight
+  maxAge: 86400, // 24 horas de cache para preflight
+  preflightContinue: false,
+  optionsSuccessStatus: 200
 }));
 
 // Middleware para parsing
@@ -85,6 +96,17 @@ app.get('/cors-test', (req, res) => {
     message: 'CORS funcionando!',
     origin: req.headers.origin,
     allowed: true,
+    timestamp: new Date().toISOString()
+  });
+});
+
+// 🔧 Endpoint para debug de CORS
+app.get('/debug/cors', (req, res) => {
+  res.json({
+    origin: req.headers.origin,
+    allowedOrigins: allowedOrigins,
+    userAgent: req.headers['user-agent'],
+    referer: req.headers.referer,
     timestamp: new Date().toISOString()
   });
 });
@@ -116,7 +138,8 @@ app.use((err, req, res, next) => {
     return res.status(403).json({ 
       error: 'CORS Error', 
       message: 'Origin não permitida',
-      origin: req.headers.origin
+      origin: req.headers.origin,
+      allowedOrigins: allowedOrigins
     });
   }
   
@@ -136,6 +159,7 @@ app.use('*', (req, res) => {
     available_routes: [
       'GET /health',
       'GET /cors-test',
+      'GET /debug/cors',
       'POST /api/admin/login',
       'GET /api/admin/dashboard'
     ]
