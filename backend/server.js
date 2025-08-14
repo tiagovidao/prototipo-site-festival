@@ -14,13 +14,11 @@ const allowedOrigins = [
   'http://localhost:8080',
   'https://festival-admin.netlify.app',
   'https://festival-admin.onrender.com',
-  // 🔥 VERCEL URLS - TODAS AS VARIAÇÕES
   'https://prototipo-site-festival-7gln.vercel.app',
-  'https://prototipo-site-festival.vercel.app', // ✅ ADICIONADA
+  'https://prototipo-site-festival.vercel.app', 
   'https://prototipo-site-festival-7gln-git-main.vercel.app',
   'https://prototipo-site-festival-7gln-git-desenvolvimento.vercel.app',
   'https://prototipo-site-festival-git-desenvolvimento.vercel.app',
-  // Adicione outros domínios conforme necessário
   process.env.FRONTEND_URL,
   process.env.CORS_ORIGINS?.split(',') || []
 ].flat().filter(Boolean);
