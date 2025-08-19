@@ -1,4 +1,3 @@
-// frontend/src/types/index.ts - Tipos atualizados
 export interface Event {
   id: string;
   title: string;
@@ -30,14 +29,7 @@ export interface ContactForm {
   mensagem: string;
 }
 
-export interface DonationForm {
-  nome: string;
-  email: string;
-  comprovantes: File[];
-}
-
 export type LoadingState = 'idle' | 'loading' | 'success' | 'error';
-export type DonationStatus = 'idle' | 'uploading' | 'success' | 'error';
 
 export interface PaymentData {
   payment_id: string;
@@ -47,7 +39,6 @@ export interface PaymentData {
   date_approved?: string;
 }
 
-// Novos tipos para o sistema modular
 export interface InscricaoRegistration {
   nome: string;
   documento: string;
@@ -67,7 +58,6 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
-// Tipos para o hook de inscrições
 export interface UseInscricoesState {
   availableEvents: Event[];
   selectedEvents: string[];

@@ -1,10 +1,7 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
-interface HomeProps {
-  navigateTo: (page: string) => void;
-}
-
-const Home: React.FC<HomeProps> = ({ navigateTo }) => {
+const Home: React.FC = () => {
   return (
     <div className="space-y-20">
       {/* Hero Section */}
@@ -14,12 +11,12 @@ const Home: React.FC<HomeProps> = ({ navigateTo }) => {
             Festival <span className="text-purple-700 dark:text-purple-400">Cultural</span>
           </h1>
 
-          <button 
-            onClick={() => navigateTo('inscricoes')} 
-            className="bg-purple-700 hover:bg-purple-800 text-white px-10 py-4 rounded-md transition-colors duration-300"
+          <Link 
+            to="/inscricoes" 
+            className="inline-block bg-purple-700 hover:bg-purple-800 text-white px-10 py-4 rounded-md transition-colors duration-300"
           >
             Inscreva-se Agora
-          </button>
+          </Link>
         </div>
       </section>
 

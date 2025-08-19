@@ -1,5 +1,6 @@
-// frontend/src/components/InscricoesFlow.tsx - Com mensagem de cancelamento
+// InscricoesFlow.tsx - Atualizado para React Router
 import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useInscricoes } from '../hooks/useInscricoes';
 import Inscricoes from '../pages/InscricoesPage';
 import Formulario from '../pages/FormularioPage';
@@ -11,12 +12,13 @@ import { Mail, AlertCircle } from 'lucide-react';
 
 interface InscricoesFlowProps {
   onSuccess: () => void;
-  onCancel: () => void;
 }
 
 type FlowStep = 'loading' | 'events' | 'form' | 'payment' | 'success' | 'error';
 
-const InscricoesFlow: React.FC<InscricoesFlowProps> = ({ onCancel }) => {
+const InscricoesFlow: React.FC<InscricoesFlowProps> = ({ onSuccess }) => {
+  const navigate = useNavigate();
+  
   // Hook customizado para gerenciar estado das inscrições
   const {
     availableEvents,
@@ -112,6 +114,7 @@ const InscricoesFlow: React.FC<InscricoesFlowProps> = ({ onCancel }) => {
 
       setPaymentData(paymentInfo);
       setCurrentStep('success');
+      onSuccess();
 
     } catch (error) {
       console.error('Erro ao finalizar inscrição:', error);
@@ -130,7 +133,7 @@ const InscricoesFlow: React.FC<InscricoesFlowProps> = ({ onCancel }) => {
   const handleCancel = () => {
     resetInscricoes();
     setPaymentData(null);
-    onCancel();
+    navigate('/');
   };
 
   // Componente da mensagem de cancelamento

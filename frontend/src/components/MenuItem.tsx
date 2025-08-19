@@ -1,26 +1,26 @@
 import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { X } from 'lucide-react';
 
 interface MenuItem {
   id: string;
   label: string;
+  path: string;
 }
 
 interface MenuItemProps {
   menuItems: MenuItem[];
-  currentPage: string;
-  navigateTo: (page: string) => void;
   isMenuOpen: boolean;
   setIsMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const MenuItem: React.FC<MenuItemProps> = ({ 
   menuItems, 
-  currentPage, 
-  navigateTo, 
   isMenuOpen, 
   setIsMenuOpen 
 }) => {
+  const location = useLocation();
+
   if (!isMenuOpen) return null;
 
   return (
@@ -43,20 +43,18 @@ const MenuItem: React.FC<MenuItemProps> = ({
         
         <div className="mt-4 space-y-2">
           {menuItems.map(item => (
-            <button
+            <Link
               key={item.id}
-              onClick={() => {
-                navigateTo(item.id);
-                setIsMenuOpen(false);
-              }}
+              to={item.path}
+              onClick={() => setIsMenuOpen(false)}
               className={`block w-full text-left py-3 px-4 rounded-md transition-colors ${
-                currentPage === item.id 
+                location.pathname === item.path
                   ? 'bg-purple-700 text-white font-semibold' 
                   : 'text-purple-800 dark:text-purple-200 hover:bg-purple-100 dark:hover:bg-purple-800/40'
               }`}
             >
               {item.label}
-            </button>
+            </Link>
           ))}
         </div>
       </nav>

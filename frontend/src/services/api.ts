@@ -1,4 +1,4 @@
-// frontend/src/services/api.ts - ATUALIZADO
+// services/api.ts - ATUALIZADO (removendo createDonation)
 import {type Event } from '../types';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
@@ -34,7 +34,7 @@ class ApiService {
     return this.request<Event[]>('/events');
   }
 
-  // NOVA FUNÇÃO: Validar se documento/email já existem
+  // Validar se documento/email já existem
   async validateRegistrationData(documento: string, email: string): Promise<{
     isValid: boolean;
     conflicts: { type: 'documento' | 'email'; value: string; status?: string }[];
@@ -65,13 +65,6 @@ class ApiService {
     return this.request<{ success: boolean }>('/contacts', {
       method: 'POST',
       body: JSON.stringify(contactData),
-    });
-  }
-
-  async createDonation(donationData: object): Promise<{ success: boolean }> {
-    return this.request<{ success: boolean }>('/donations', {
-      method: 'POST',
-      body: JSON.stringify(donationData),
     });
   }
 }

@@ -1,11 +1,8 @@
 import React from 'react';
-import { Mail, Phone, MapPin, FileText, Calendar, Check } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Mail, Phone, MapPin, FileText, Calendar } from 'lucide-react';
 
-interface FooterProps {
-  navigateTo: (page: string) => void;
-}
-
-const Footer: React.FC<FooterProps> = ({ navigateTo }) => {
+const Footer: React.FC = () => {
   return (
     <footer className="py-16 border-t border-stone-200 dark:border-stone-800 bg-stone-100 dark:bg-stone-800/50">
       <div className="max-w-6xl mx-auto px-4">
@@ -40,27 +37,20 @@ const Footer: React.FC<FooterProps> = ({ navigateTo }) => {
           <div>
             <h4 className="font-semibold text-lg mb-4 text-stone-800 dark:text-stone-200">Links Rápidos</h4>
             <div className="space-y-3">
-              <button 
-                onClick={() => navigateTo('inscricoes')} 
+              <Link 
+                to="/inscricoes" 
                 className="flex items-center gap-3 text-stone-600 dark:text-stone-400 hover:text-purple-700 dark:hover:text-purple-500 transition-colors"
               >
                 <FileText size={16} />
                 <span>Inscrições</span>
-              </button>
-              <button 
-                onClick={() => navigateTo('edicoes')} 
+              </Link>
+              <Link 
+                to="/edicoes" 
                 className="flex items-center gap-3 text-stone-600 dark:text-stone-400 hover:text-purple-700 dark:hover:text-purple-500 transition-colors"
               >
                 <Calendar size={16} />
                 <span>Edições Anteriores</span>
-              </button>
-              <button 
-                onClick={() => navigateTo('doacoes')} 
-                className="flex items-center gap-3 text-stone-600 dark:text-stone-400 hover:text-purple-700 dark:hover:text-purple-500 transition-colors"
-              >
-                <Check size={16} />
-                <span>Doações</span>
-              </button>
+              </Link>
             </div>
           </div>
         </div>

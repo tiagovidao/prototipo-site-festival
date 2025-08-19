@@ -1,19 +1,19 @@
-// backend/src/routes/index.js - ATUALIZADO
+// backend/src/routes/index.js - ATUALIZADO (removendo rotas de doações)
 const express = require('express');
 const router = express.Router();
 
 // Importar controllers de forma segura
-let eventsController, registrationsController, contactController, donationsController, adminController, paymentController;
+let eventsController, registrationsController, contactController, adminController, paymentController;
 
 try {
   eventsController = require('../controllers/eventsController');
   registrationsController = require('../controllers/registrationsController');
   contactController = require('../controllers/contactController');
-  donationsController = require('../controllers/donationsController');
   adminController = require('../controllers/adminController');
-  paymentController = require('../controllers/paymentController'); // NOVO
+  paymentController = require('../controllers/paymentController');
+  console.log('✅ Controllers carregados com sucesso');
 } catch (error) {
-  console.error('Erro ao importar controllers:', error.message);
+  console.error('❌ Erro ao importar controllers:', error.message);
 }
 
 // Middleware de logging para debug
@@ -41,7 +41,7 @@ const basicAuth = (req, res, next) => {
 
 // === ROTAS PÚBLICAS ===
 
-// Eventos
+// Eventos - GET /api/events
 router.get('/events', async (req, res) => {
   try {
     if (eventsController && eventsController.getEvents) {
@@ -55,6 +55,7 @@ router.get('/events', async (req, res) => {
   }
 });
 
+// Validar dados de inscrição - POST /api/registrations/validate
 router.post('/registrations/validate', async (req, res) => {
   try {
     if (registrationsController && registrationsController.validateRegistrationData) {
@@ -68,7 +69,7 @@ router.post('/registrations/validate', async (req, res) => {
   }
 });
 
-// Inscrições
+// Criar inscrição - POST /api/registrations
 router.post('/registrations', async (req, res) => {
   try {
     if (registrationsController && registrationsController.createRegistration) {
@@ -82,7 +83,7 @@ router.post('/registrations', async (req, res) => {
   }
 });
 
-// Contatos
+// Contatos - POST /api/contacts
 router.post('/contacts', async (req, res) => {
   try {
     if (contactController && contactController.createContact) {
@@ -96,29 +97,16 @@ router.post('/contacts', async (req, res) => {
   }
 });
 
-// Doações
-router.post('/donations', async (req, res) => {
-  try {
-    if (donationsController && donationsController.createDonation) {
-      await donationsController.createDonation(req, res);
-    } else {
-      res.status(500).json({ error: 'Controller de doações não disponível' });
-    }
-  } catch (error) {
-    console.error('Erro na rota /donations:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
-});
+// === ROTAS DE PAGAMENTO ===
 
-// === ROTAS DE PAGAMENTO (NOVO) ===
-
-// Criar preferência de pagamento
+// Criar preferência de pagamento - POST /api/payment/create-preference
 router.post('/payment/create-preference', async (req, res) => {
   try {
     if (paymentController && paymentController.createPaymentPreference) {
       await paymentController.createPaymentPreference(req, res);
     } else {
       // Fallback simples para testes sem Mercado Pago
+      console.log('⚠️ Controller de pagamento não disponível, usando mock');
       const { paymentData, method } = req.body;
       const mockPaymentId = `mock_${Date.now()}`;
       
@@ -141,13 +129,14 @@ router.post('/payment/create-preference', async (req, res) => {
   }
 });
 
-// Processar pagamento com cartão
+// Processar pagamento com cartão - POST /api/payment/process-card
 router.post('/payment/process-card', async (req, res) => {
   try {
     if (paymentController && paymentController.processCardPayment) {
       await paymentController.processCardPayment(req, res);
     } else {
       // Mock para testes
+      console.log('⚠️ Controller de pagamento não disponível, usando mock');
       const mockPaymentId = `card_${Date.now()}`;
       setTimeout(() => {
         res.json({
@@ -163,13 +152,14 @@ router.post('/payment/process-card', async (req, res) => {
   }
 });
 
-// Verificar status do pagamento
+// Verificar status do pagamento - GET /api/payment/check/:paymentId
 router.get('/payment/check/:paymentId', async (req, res) => {
   try {
     if (paymentController && paymentController.checkPaymentStatus) {
       await paymentController.checkPaymentStatus(req, res);
     } else {
       // Mock para testes - simular aprovação após 10 segundos
+      console.log('⚠️ Controller de pagamento não disponível, usando mock');
       const { paymentId } = req.params;
       const isOld = Date.now() - parseInt(paymentId.split('_')[1]) > 10000;
       
@@ -185,13 +175,13 @@ router.get('/payment/check/:paymentId', async (req, res) => {
   }
 });
 
-// Webhook do Mercado Pago
+// Webhook do Mercado Pago - POST /api/payment/webhook
 router.post('/payment/webhook', async (req, res) => {
   try {
     if (paymentController && paymentController.handleWebhook) {
       await paymentController.handleWebhook(req, res);
     } else {
-      console.log('📢 Webhook recebido:', req.body);
+      console.log('📢 Webhook recebido (mock):', req.body);
       res.status(200).send('OK');
     }
   } catch (error) {
@@ -202,7 +192,7 @@ router.post('/payment/webhook', async (req, res) => {
 
 // === ROTAS ADMINISTRATIVAS (com autenticação básica) ===
 
-// Dashboard administrativo
+// Dashboard administrativo - GET /api/admin/dashboard
 router.get('/admin/dashboard', basicAuth, async (req, res) => {
   try {
     if (adminController && adminController.getAdminDashboard) {
@@ -216,7 +206,7 @@ router.get('/admin/dashboard', basicAuth, async (req, res) => {
   }
 });
 
-// Listar todas as inscrições
+// Listar todas as inscrições - GET /api/admin/registrations
 router.get('/admin/registrations', basicAuth, async (req, res) => {
   try {
     if (registrationsController && registrationsController.getRegistrations) {
@@ -230,7 +220,7 @@ router.get('/admin/registrations', basicAuth, async (req, res) => {
   }
 });
 
-// Atualizar status de inscrição
+// Atualizar status de inscrição - PUT /api/admin/registrations/:id/status
 router.put('/admin/registrations/:id/status', basicAuth, async (req, res) => {
   try {
     if (registrationsController && registrationsController.updateRegistrationStatus) {
@@ -244,23 +234,28 @@ router.put('/admin/registrations/:id/status', basicAuth, async (req, res) => {
   }
 });
 
-// Rota de teste
+// Rota de teste - GET /api/test
 router.get('/test', (req, res) => {
   res.json({ 
-    message: 'API funcionando!', 
+    message: 'API Festival de Ballet funcionando!', 
     timestamp: new Date().toISOString(),
-    routes: [
-      'GET /api/events',
-      'POST /api/registrations',
-      'POST /api/contacts',
-      'POST /api/donations',
-      'POST /api/payment/create-preference',
-      'POST /api/payment/process-card',
-      'GET /api/payment/check/:paymentId',
-      'POST /api/payment/webhook',
-      'GET /admin/dashboard (autenticação necessária)',
-      'GET /admin/registrations (autenticação necessária)',
-      'PUT /admin/registrations/:id/status (autenticação necessária)'
+    version: '2.0.0',
+    available_routes: [
+      'GET /api/events - Listar eventos disponíveis',
+      'POST /api/registrations/validate - Validar dados de inscrição',
+      'POST /api/registrations - Criar nova inscrição',
+      'POST /api/contacts - Enviar mensagem de contato',
+      'POST /api/payment/create-preference - Criar pagamento (PIX/Cartão)',
+      'POST /api/payment/process-card - Processar cartão de crédito',
+      'GET /api/payment/check/:paymentId - Verificar status pagamento',
+      'POST /api/payment/webhook - Webhook Mercado Pago',
+      '--- ROTAS ADMINISTRATIVAS (autenticação necessária) ---',
+      'GET /api/admin/dashboard - Dashboard administrativo',
+      'GET /api/admin/registrations - Listar inscrições',
+      'PUT /api/admin/registrations/:id/status - Atualizar status'
+    ],
+    removed_routes: [
+      'POST /api/donations - REMOVIDO (funcionalidade descontinuada)'
     ]
   });
 });

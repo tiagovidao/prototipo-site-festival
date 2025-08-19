@@ -1,0 +1,8 @@
+
+INSERT INTO events (id, title, instructor, date, time, location, price, available, vacancies, total_vacancies) VALUES
+('ballet-junior', 'BALLET CLÁSSICO JÚNIOR', 'CLÁUDIA ZACCARI', '2025-08-25', '13:30 às 15:00h', 'SALA 01', 250.00, false, 0, 15),
+('ballet-pre', 'BALLET CLÁSSICO PRÉ', 'CARIDAD MARTINEZ', '2025-08-25', '15:00 às 16:30h', 'SALA 01', 250.00, true, 5, 15),
+('ballet-contemporaneo', 'BALLET CONTEMPORÂNEO', 'FELIPE SILVA', '2025-08-26', '10:00 às 12:00h', 'SALA 02', 200.00, true, 3, 10),
+('ballet-avancado', 'BALLET AVANÇADO', 'AMANDA COSTA', '2025-08-27', '14:00 às 16:00h', 'SALA 03', 220.00, true, 8, 12),
+('ballet-infantil', 'BALLET INFANTIL', 'RAFAEL SANTOS', '2025-08-28', '16:30 às 18:30h', 'SALA 01', 180.00, true, 2, 10),
+('ballet-iniciante', 'BALLET INICIANTE', 'JULIANA OLIVEIRA', '2025-08-29', '09:00 às 11:00h', 'SALA 04', 240.00, false, 0, 8);

@@ -1,0 +1,54 @@
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
+
+CREATE TABLE public.contacts (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  nome text NOT NULL,
+  email text,
+  telefone text,
+  cidade text,
+  escola text,
+  mensagem text NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT contacts_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.donations (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  nome text NOT NULL,
+  email text NOT NULL,
+  comprovantes ARRAY NOT NULL,
+  status text DEFAULT 'pending'::text,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT donations_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.events (
+  id text NOT NULL,
+  title text NOT NULL,
+  instructor text NOT NULL,
+  date date NOT NULL,
+  time text NOT NULL,
+  location text NOT NULL,
+  price numeric NOT NULL,
+  available boolean DEFAULT true,
+  vacancies integer NOT NULL DEFAULT 0,
+  total_vacancies integer NOT NULL DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT events_pkey PRIMARY KEY (id)
+);
+CREATE TABLE public.registrations (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  nome text NOT NULL,
+  documento text NOT NULL,
+  email text NOT NULL,
+  celular text NOT NULL,
+  data_nascimento date NOT NULL,
+  selected_events ARRAY NOT NULL,
+  total_amount numeric NOT NULL DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  status text DEFAULT 'confirmada'::text CHECK (status = ANY (ARRAY['confirmada'::text, 'pendente'::text, 'cancelada'::text])),
+  payment_id text,
+  payment_status text DEFAULT 'pending'::text,
+  payment_method text,
+  CONSTRAINT registrations_pkey PRIMARY KEY (id)
+);
