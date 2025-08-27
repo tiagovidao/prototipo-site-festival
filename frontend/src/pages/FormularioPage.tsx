@@ -1,4 +1,3 @@
-// frontend/src/pages/FormularioPage.tsx - Validação apenas no submit
 import React, { useState, useCallback } from 'react';
 import ApiService from '../services/api';
 import { 
@@ -61,7 +60,6 @@ const useCPFValidation = () => {
   return { validateCPF, handleCPFChange };
 };
 
-// Componente principal
 const Formulario: React.FC<FormularioProps> = ({
   selectedEvents,
   availableEvents,
@@ -74,7 +72,6 @@ const Formulario: React.FC<FormularioProps> = ({
   const { validateCPF, handleCPFChange } = useCPFValidation();
   const [isValidating, setIsValidating] = useState(false);
 
-  // Formatar celular
   const formatCelular = useCallback((value: string): string => {
     const numbers = value.replace(/\D/g, '').slice(0, 11);
     
@@ -90,20 +87,16 @@ const Formulario: React.FC<FormularioProps> = ({
     return emailRegex.test(email);
   }, []);
 
-  // Handler para celular
   const handleCelularChange = useCallback((value: string) => {
     const formattedValue = formatCelular(value);
     setFormData({ ...formData, celular: formattedValue });
   }, [formatCelular, formData, setFormData]);
 
-  // Handler para email
   const handleEmailChange = useCallback((value: string) => {
     setFormData({ ...formData, email: value });
   }, [formData, setFormData]);
 
-  // Validação completa do formulário
   const validateForm = (): { isValid: boolean; message?: string } => {
-    // Verificar campos obrigatórios
     const requiredFields = ['nome', 'documento', 'email', 'celular', 'dataNascimento'];
     const missingFields = requiredFields.filter(field => !formData[field as keyof typeof formData]?.trim());
     

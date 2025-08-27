@@ -1,217 +1,259 @@
-// backend/src/controllers/registrationsController.js - ADICIONADO
 const supabase = require('../config/supabase');
 
-// NOVA FUNÇÃO: Validar dados antes de prosseguir com pagamento
 const validateRegistrationData = async (req, res) => {
   try {
-    console.log('📋 Validando dados de inscrição:', req.body);
-    
     const { documento, email } = req.body;
-
-    // Validação básica
+    
     if (!documento || !email) {
-      return res.status(400).json({ 
-        error: 'Documento e email são obrigatórios para validação',
+      return res.status(400).json({
         isValid: false,
-        conflicts: []
+        conflicts: [],
+        message: 'Documento e email são obrigatórios'
       });
     }
-
-    // Verificar se já existe uma inscrição com mesmo documento ou email
-    const { data: existingRegistrations, error } = await supabase
+    
+    const { data: existing, error } = await supabase
       .from('registrations')
-      .select('id, documento, email, status')
-      .or(`documento.eq.${documento.trim()},email.eq.${email.trim()}`)
-      .neq('status', 'cancelada'); // Ignorar inscrições canceladas
-
+      .select('documento, email, status')
+      .or(`documento.eq.${documento},email.eq.${email}`)
+      .neq('status', 'cancelada');
+    
     if (error) {
-      console.error('Erro ao validar duplicatas:', error);
       throw error;
     }
-
-    console.log('🔍 Inscrições encontradas:', existingRegistrations);
-
-    // Se não encontrou nenhuma, está válido
-    if (!existingRegistrations || existingRegistrations.length === 0) {
-      return res.json({
-        isValid: true,
-        conflicts: []
-      });
-    }
-
-    // Se encontrou, identificar os conflitos
+    
     const conflicts = [];
     
-    for (const registration of existingRegistrations) {
-      if (registration.documento === documento.trim()) {
+    existing?.forEach(reg => {
+      if (reg.documento === documento) {
         conflicts.push({
           type: 'documento',
-          value: documento,
-          status: registration.status
+          value: reg.documento,
+          status: reg.status
         });
       }
-      
-      if (registration.email === email.trim()) {
+      if (reg.email === email) {
         conflicts.push({
           type: 'email', 
-          value: email,
-          status: registration.status
+          value: reg.email,
+          status: reg.status
         });
       }
-    }
-
-    console.log('⚠️ Conflitos encontrados:', conflicts);
-
-    return res.json({
-      isValid: false,
-      conflicts: conflicts
     });
-
+    
+    const isValid = conflicts.length === 0;
+    
+    res.json({
+      isValid,
+      conflicts,
+      message: isValid ? 'Dados válidos' : 'Documento ou email já cadastrados'
+    });
   } catch (error) {
-    console.error('Erro na validação de duplicatas:', error);
-    res.status(500).json({ 
-      error: 'Erro interno na validação',
-      message: error.message,
+    res.status(500).json({
       isValid: false,
-      conflicts: []
+      conflicts: [],
+      error: 'Erro interno na validação',
+      message: error.message
     });
   }
 };
 
 const createRegistration = async (req, res) => {
   try {
-    console.log('Dados recebidos:', req.body);
-    
-    const { 
-      nome, 
-      documento, 
-      email, 
-      celular, 
-      dataNascimento, 
-      selectedEvents, 
-      totalAmount 
+    const {
+      nome,
+      documento,
+      email,
+      celular,
+      dataNascimento,
+      escola,
+      coreografo,
+      observacoes,
+      modalidadesSelecionadas,
+      precoTotal,
+      idadeParticipante,
+      categoriaParticipante,
+      metodoPagamento = 'pendente'
     } = req.body;
-
-    // Validação básica
-    if (!nome || !documento || !email || !celular || !dataNascimento || !selectedEvents?.length) {
-      return res.status(400).json({ 
-        error: 'Todos os campos são obrigatórios',
-        received: req.body
+    
+    const camposObrigatorios = { nome, documento, email, celular, dataNascimento };
+    const camposFaltantes = Object.entries(camposObrigatorios)
+      .filter(([_, valor]) => !valor)
+      .map(([campo, _]) => campo);
+    
+    if (camposFaltantes.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Campos obrigatórios faltando',
+        camposFaltantes
       });
     }
-
-    // Verificar se já existe uma inscrição com mesmo documento ou email
-    const { data: existingRegistration } = await supabase
+    
+    if (!modalidadesSelecionadas || modalidadesSelecionadas.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Selecione pelo menos uma modalidade'
+      });
+    }
+    
+    const { data: eventosValidos, error: eventosError } = await supabase
+      .from('events')
+      .select('id, titulo, preco, disponivel')
+      .in('id', modalidadesSelecionadas);
+    
+    if (eventosError) throw eventosError;
+    
+    if (eventosValidos.length !== modalidadesSelecionadas.length) {
+      return res.status(400).json({
+        success: false,
+        error: 'Alguns eventos selecionados não foram encontrados'
+      });
+    }
+    
+    const eventosIndisponiveis = eventosValidos.filter(e => !e.disponivel);
+    if (eventosIndisponiveis.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Alguns eventos selecionados não estão mais disponíveis',
+        eventosIndisponiveis: eventosIndisponiveis.map(e => e.titulo)
+      });
+    }
+    
+    const precoCalculado = eventosValidos.reduce((total, evento) => total + evento.preco, 0);
+    
+    let idade = idadeParticipante;
+    if (!idade && dataNascimento) {
+      const hoje = new Date();
+      const nascimento = new Date(dataNascimento);
+      idade = hoje.getFullYear() - nascimento.getFullYear();
+      if (hoje.getMonth() < nascimento.getMonth() || 
+          (hoje.getMonth() === nascimento.getMonth() && hoje.getDate() < nascimento.getDate())) {
+        idade--;
+      }
+    }
+    
+    let categoria = categoriaParticipante;
+    if (!categoria && idade) {
+      if (idade >= 9 && idade <= 11) categoria = 'PRÉ (9 a 11 anos)';
+      else if (idade >= 12 && idade <= 14) categoria = 'JÚNIOR (12 a 14 anos)';
+      else if (idade >= 15 && idade <= 19) categoria = 'SENIOR (15 a 19 anos)';
+      else if (idade >= 20) categoria = 'AVANÇADO (20+ anos)';
+    }
+    
+    const dadosInscricao = {
+      nome: nome.trim(),
+      documento: documento.replace(/\D/g, ''),
+      email: email.toLowerCase().trim(),
+      celular: celular.replace(/\D/g, ''),
+      data_nascimento: dataNascimento,
+      escola: escola?.trim() || null,
+      coreografo: coreografo?.trim() || null,
+      observacoes: observacoes?.trim() || null,
+      modalidades_selecionadas: modalidadesSelecionadas,
+      total_amount: precoCalculado,
+      idade_participante: idade,
+      categoria_participante: categoria,
+      status: 'pendente',
+      payment_status: 'pendente',
+      payment_method: metodoPagamento,
+      created_at: new Date().toISOString()
+    };
+    
+    const { data: inscricao, error: insertError } = await supabase
       .from('registrations')
-      .select('id, documento, email')
-      .or(`documento.eq.${documento.trim()},email.eq.${email.trim()}`)
+      .insert([dadosInscricao])
+      .select()
       .single();
-
-    if (existingRegistration) {
-      return res.status(409).json({
-        error: 'Já existe uma inscrição com este documento ou email',
-        conflict: existingRegistration.documento === documento.trim() ? 'documento' : 'email'
-      });
+    
+    if (insertError) {
+      throw insertError;
     }
-
-    // Verificar disponibilidade de vagas para cada evento selecionado
-    for (const eventId of selectedEvents) {
-      // Buscar informações do evento
-      const { data: event, error: eventError } = await supabase
-        .from('events')
-        .select('*')
-        .eq('id', eventId)
-        .single();
-
-      if (eventError || !event) {
-        return res.status(400).json({
-          error: `Evento ${eventId} não encontrado`
-        });
-      }
-
-      if (!event.available) {
-        return res.status(400).json({
-          error: `Evento ${event.title} não está disponível para inscrição`
-        });
-      }
-
-      // Contar inscrições atuais para este evento
-      const { data: currentRegistrations, error: countError } = await supabase
-        .from('registrations')
-        .select('selected_events')
-        .eq('status', 'confirmada');
-
-      if (countError) {
-        throw countError;
-      }
-
-      const eventCount = currentRegistrations?.reduce((count, reg) => {
-        return count + (reg.selected_events?.includes(eventId) ? 1 : 0);
-      }, 0) || 0;
-
-      const availableSpots = event.total_vacancies - eventCount;
-
-      if (availableSpots <= 0) {
-        return res.status(409).json({
-          error: `Evento ${event.title} está esgotado`,
-          eventId: eventId,
-          availableSpots: 0
-        });
-      }
-    }
-
-    // Se chegou até aqui, todas as verificações passaram - criar a inscrição
-    const { data, error } = await supabase
-      .from('registrations')
-      .insert([{
-        nome: nome.trim(),
-        documento: documento.trim(),
-        email: email.trim(),
-        celular: celular.trim(),
-        data_nascimento: dataNascimento,
-        selected_events: selectedEvents,
-        total_amount: totalAmount || 0,
-        status: 'confirmada'
-      }])
-      .select();
-
-    if (error) {
-      console.error('Erro do Supabase:', error);
-      throw error;
-    }
-
-    console.log('✅ Inscrição criada:', data[0]);
-
-    res.status(201).json({ 
+    
+    const eventosDetalhes = eventosValidos.map(evento => ({
+      id: evento.id,
+      titulo: evento.titulo,
+      preco: evento.preco
+    }));
+    
+    res.status(201).json({
+      success: true,
       message: 'Inscrição realizada com sucesso!',
-      data: data[0]
+      inscricao: {
+        id: inscricao.id,
+        nome: inscricao.nome,
+        email: inscricao.email,
+        status: inscricao.status,
+        totalAmount: inscricao.total_amount,
+        modalidades: eventosDetalhes,
+        proximosPassos: [
+          'Aguarde o email de confirmação',
+          'Realize o pagamento conforme instruções',
+          'Prepare-se para o festival!'
+        ]
+      }
     });
   } catch (error) {
-    console.error('Erro ao criar inscrição:', error);
-    res.status(500).json({ 
-      error: 'Erro ao processar inscrição',
-      message: error.message 
+    res.status(500).json({
+      success: false,
+      error: 'Erro interno ao processar inscrição',
+      message: error.message
     });
   }
 };
 
 const getRegistrations = async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { status, modalidade, escola, page = 1, limit = 20 } = req.query;
+    
+    let query = supabase
       .from('registrations')
-      .select('*')
+      .select(`*, modalidades_selecionadas`)
       .order('created_at', { ascending: false });
-
-    if (error) {
-      throw error;
+    
+    if (status && status !== 'todos') {
+      query = query.eq('status', status);
     }
-
-    res.json(data);
+    
+    if (escola) {
+      query = query.ilike('escola', `%${escola}%`);
+    }
+    
+    const offset = (parseInt(page) - 1) * parseInt(limit);
+    query = query.range(offset, offset + parseInt(limit) - 1);
+    
+    const { data: inscricoes, error, count } = await query;
+    
+    if (error) throw error;
+    
+    const inscricoesEnriquecidas = await Promise.all(
+      (inscricoes || []).map(async (inscricao) => {
+        if (!inscricao.modalidades_selecionadas) return inscricao;
+        
+        const { data: eventos } = await supabase
+          .from('events')
+          .select('id, titulo, estilo, modalidade, categoria, preco')
+          .in('id', inscricao.modalidades_selecionadas);
+        
+        return {
+          ...inscricao,
+          modalidadesDetalhes: eventos || []
+        };
+      })
+    );
+    
+    res.json({
+      inscricoes: inscricoesEnriquecidas,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: count,
+        totalPages: Math.ceil(count / parseInt(limit))
+      }
+    });
   } catch (error) {
-    console.error('Erro ao buscar inscrições:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Erro ao buscar inscrições',
-      message: error.message 
+      message: error.message
     });
   }
 };
@@ -219,40 +261,90 @@ const getRegistrations = async (req, res) => {
 const updateRegistrationStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
-
-    if (!['confirmada', 'cancelada', 'pendente'].includes(status)) {
+    const { status, observacoes_admin } = req.body;
+    
+    const statusValidos = ['pendente', 'aprovada', 'confirmada', 'cancelada', 'rejeitada'];
+    if (!statusValidos.includes(status)) {
       return res.status(400).json({
-        error: 'Status inválido. Use: confirmada, cancelada ou pendente'
+        error: 'Status inválido',
+        statusValidos
       });
     }
-
-    const { data, error } = await supabase
+    
+    const { data: inscricao, error } = await supabase
       .from('registrations')
-      .update({ status })
+      .update({
+        status,
+        observacoes_admin: observacoes_admin || null,
+        updated_at: new Date().toISOString()
+      })
       .eq('id', id)
-      .select();
-
+      .select()
+      .single();
+    
     if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Inscrição não encontrada' });
+      }
       throw error;
     }
-
+    
     res.json({
+      success: true,
       message: 'Status atualizado com sucesso',
-      data: data[0]
+      inscricao
     });
   } catch (error) {
-    console.error('Erro ao atualizar status:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Erro ao atualizar status',
-      message: error.message 
+      message: error.message
     });
   }
 };
 
-module.exports = { 
-  validateRegistrationData, // NOVA EXPORTAÇÃO
-  createRegistration, 
-  getRegistrations, 
-  updateRegistrationStatus 
+const getRegistrationStats = async (req, res) => {
+  try {
+    const { data: inscricoes, error } = await supabase
+      .from('registrations')
+      .select('status, total_amount, modalidades_selecionadas, escola, idade_participante, categoria_participante');
+    
+    if (error) throw error;
+    
+    const stats = {
+      totalInscricoes: inscricoes.length,
+      distribuicaoStatus: inscricoes.reduce((acc, i) => {
+        acc[i.status] = (acc[i.status] || 0) + 1;
+        return acc;
+      }, {}),
+      receitaTotal: inscricoes.reduce((sum, i) => sum + (i.total_amount || 0), 0),
+      receitaPorStatus: inscricoes.reduce((acc, i) => {
+        if (!acc[i.status]) acc[i.status] = 0;
+        acc[i.status] += i.total_amount || 0;
+        return acc;
+      }, {}),
+      distribuicaoIdades: inscricoes.reduce((acc, i) => {
+        const categoria = i.categoria_participante || 'Não informado';
+        acc[categoria] = (acc[categoria] || 0) + 1;
+        return acc;
+      }, {}),
+      escolasParticipantes: [...new Set(inscricoes.map(i => i.escola).filter(Boolean))].length,
+      mediaModalidadesPorInscricao: inscricoes.reduce((sum, i) => 
+        sum + (i.modalidades_selecionadas?.length || 0), 0) / inscricoes.length
+    };
+    
+    res.json(stats);
+  } catch (error) {
+    res.status(500).json({
+      error: 'Erro ao calcular estatísticas',
+      message: error.message
+    });
+  }
+};
+
+module.exports = {
+  validateRegistrationData,
+  createRegistration,
+  getRegistrations,
+  updateRegistrationStatus,
+  getRegistrationStats
 };

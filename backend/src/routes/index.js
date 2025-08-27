@@ -1,61 +1,77 @@
-// backend/src/routes/index.js - ATUALIZADO (removendo rotas de doações)
 const express = require('express');
 const router = express.Router();
 
-// Importar controllers de forma segura
-let eventsController, registrationsController, contactController, adminController, paymentController;
+const eventsController = require('../controllers/eventsController');
+const registrationsController = require('../controllers/registrationsController');
+const contactsController = require('../controllers/contactsController');
 
-try {
-  eventsController = require('../controllers/eventsController');
-  registrationsController = require('../controllers/registrationsController');
-  contactController = require('../controllers/contactController');
-  adminController = require('../controllers/adminController');
-  paymentController = require('../controllers/paymentController');
-  console.log('✅ Controllers carregados com sucesso');
-} catch (error) {
-  console.error('❌ Erro ao importar controllers:', error.message);
-}
-
-// Middleware de logging para debug
-router.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-  next();
-});
-
-// Middleware básico de autenticação para rotas admin
-const basicAuth = (req, res, next) => {
-  const adminPassword = process.env.ADMIN_PASSWORD || 'admin123';
-  const provided = req.headers.authorization?.replace('Basic ', '');
-  
-  if (provided) {
-    const decoded = Buffer.from(provided, 'base64').toString();
-    const [username, password] = decoded.split(':');
-    
-    if (username === 'admin' && password === adminPassword) {
-      return next();
-    }
-  }
-  
-  res.status(401).json({ error: 'Autenticação necessária' });
-};
-
-// === ROTAS PÚBLICAS ===
-
-// Eventos - GET /api/events
 router.get('/events', async (req, res) => {
   try {
     if (eventsController && eventsController.getEvents) {
       await eventsController.getEvents(req, res);
     } else {
-      res.status(500).json({ error: 'Controller de eventos não disponível' });
+      res.status(500).json({ 
+        error: 'Controller de eventos não disponível',
+        hint: 'Verifique se o eventsController foi atualizado'
+      });
     }
   } catch (error) {
-    console.error('Erro na rota /events:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    console.error('❌ Erro na rota /events:', error);
+    res.status(500).json({ 
+      error: 'Erro interno do servidor',
+      message: error.message 
+    });
   }
 });
 
-// Validar dados de inscrição - POST /api/registrations/validate
+router.get('/events/filter', async (req, res) => {
+  try {
+    if (eventsController && eventsController.getEventsByFilter) {
+      await eventsController.getEventsByFilter(req, res);
+    } else {
+      res.status(500).json({ error: 'Controller de filtros não disponível' });
+    }
+  } catch (error) {
+    console.error('❌ Erro na rota /events/filter:', error);
+    res.status(500).json({ 
+      error: 'Erro interno do servidor',
+      message: error.message 
+    });
+  }
+});
+
+router.get('/events/:id', async (req, res) => {
+  try {
+    if (eventsController && eventsController.getEventById) {
+      await eventsController.getEventById(req, res);
+    } else {
+      res.status(500).json({ error: 'Controller de evento específico não disponível' });
+    }
+  } catch (error) {
+    console.error('❌ Erro na rota /events/:id:', error);
+    res.status(500).json({ 
+      error: 'Erro interno do servidor',
+      message: error.message 
+    });
+  }
+});
+
+router.get('/events/stats', async (req, res) => {
+  try {
+    if (eventsController && eventsController.getFestivalStats) {
+      await eventsController.getFestivalStats(req, res);
+    } else {
+      res.status(500).json({ error: 'Controller de estatísticas não disponível' });
+    }
+  } catch (error) {
+    console.error('❌ Erro na rota /events/stats:', error);
+    res.status(500).json({ 
+      error: 'Erro interno do servidor',
+      message: error.message 
+    });
+  }
+});
+
 router.post('/registrations/validate', async (req, res) => {
   try {
     if (registrationsController && registrationsController.validateRegistrationData) {
@@ -64,12 +80,14 @@ router.post('/registrations/validate', async (req, res) => {
       res.status(500).json({ error: 'Controller de validação não disponível' });
     }
   } catch (error) {
-    console.error('Erro na rota /registrations/validate:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    console.error('❌ Erro na rota /registrations/validate:', error);
+    res.status(500).json({ 
+      error: 'Erro interno do servidor',
+      message: error.message 
+    });
   }
 });
 
-// Criar inscrição - POST /api/registrations
 router.post('/registrations', async (req, res) => {
   try {
     if (registrationsController && registrationsController.createRegistration) {
@@ -78,185 +96,197 @@ router.post('/registrations', async (req, res) => {
       res.status(500).json({ error: 'Controller de inscrições não disponível' });
     }
   } catch (error) {
-    console.error('Erro na rota /registrations:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    console.error('❌ Erro na rota /registrations:', error);
+    res.status(500).json({ 
+      error: 'Erro interno do servidor',
+      message: error.message 
+    });
   }
 });
 
-// Contatos - POST /api/contacts
-router.post('/contacts', async (req, res) => {
-  try {
-    if (contactController && contactController.createContact) {
-      await contactController.createContact(req, res);
-    } else {
-      res.status(500).json({ error: 'Controller de contatos não disponível' });
-    }
-  } catch (error) {
-    console.error('Erro na rota /contacts:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
-});
-
-// === ROTAS DE PAGAMENTO ===
-
-// Criar preferência de pagamento - POST /api/payment/create-preference
-router.post('/payment/create-preference', async (req, res) => {
-  try {
-    if (paymentController && paymentController.createPaymentPreference) {
-      await paymentController.createPaymentPreference(req, res);
-    } else {
-      // Fallback simples para testes sem Mercado Pago
-      console.log('⚠️ Controller de pagamento não disponível, usando mock');
-      const { paymentData, method } = req.body;
-      const mockPaymentId = `mock_${Date.now()}`;
-      
-      if (method === 'pix') {
-        res.json({
-          payment_id: mockPaymentId,
-          qr_code: 'mock_pix_code_123456789',
-          qr_code_base64: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
-        });
-      } else {
-        res.json({
-          preference_id: `pref_${mockPaymentId}`,
-          init_point: 'https://mercadopago.com/mock'
-        });
-      }
-    }
-  } catch (error) {
-    console.error('Erro na rota /payment/create-preference:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
-});
-
-// Processar pagamento com cartão - POST /api/payment/process-card
-router.post('/payment/process-card', async (req, res) => {
-  try {
-    if (paymentController && paymentController.processCardPayment) {
-      await paymentController.processCardPayment(req, res);
-    } else {
-      // Mock para testes
-      console.log('⚠️ Controller de pagamento não disponível, usando mock');
-      const mockPaymentId = `card_${Date.now()}`;
-      setTimeout(() => {
-        res.json({
-          payment_id: mockPaymentId,
-          status: 'approved',
-          status_detail: 'accredited'
-        });
-      }, 2000); // Simular processamento
-    }
-  } catch (error) {
-    console.error('Erro na rota /payment/process-card:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
-});
-
-// Verificar status do pagamento - GET /api/payment/check/:paymentId
-router.get('/payment/check/:paymentId', async (req, res) => {
-  try {
-    if (paymentController && paymentController.checkPaymentStatus) {
-      await paymentController.checkPaymentStatus(req, res);
-    } else {
-      // Mock para testes - simular aprovação após 10 segundos
-      console.log('⚠️ Controller de pagamento não disponível, usando mock');
-      const { paymentId } = req.params;
-      const isOld = Date.now() - parseInt(paymentId.split('_')[1]) > 10000;
-      
-      res.json({
-        payment_id: paymentId,
-        status: isOld ? 'approved' : 'pending',
-        status_detail: isOld ? 'accredited' : 'pending_payment'
-      });
-    }
-  } catch (error) {
-    console.error('Erro na rota /payment/check:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
-});
-
-// Webhook do Mercado Pago - POST /api/payment/webhook
-router.post('/payment/webhook', async (req, res) => {
-  try {
-    if (paymentController && paymentController.handleWebhook) {
-      await paymentController.handleWebhook(req, res);
-    } else {
-      console.log('📢 Webhook recebido (mock):', req.body);
-      res.status(200).send('OK');
-    }
-  } catch (error) {
-    console.error('Erro na rota /payment/webhook:', error);
-    res.status(500).send('Error');
-  }
-});
-
-// === ROTAS ADMINISTRATIVAS (com autenticação básica) ===
-
-// Dashboard administrativo - GET /api/admin/dashboard
-router.get('/admin/dashboard', basicAuth, async (req, res) => {
-  try {
-    if (adminController && adminController.getAdminDashboard) {
-      await adminController.getAdminDashboard(req, res);
-    } else {
-      res.status(500).json({ error: 'Controller admin não disponível' });
-    }
-  } catch (error) {
-    console.error('Erro na rota /admin/dashboard:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
-});
-
-// Listar todas as inscrições - GET /api/admin/registrations
-router.get('/admin/registrations', basicAuth, async (req, res) => {
+router.get('/registrations', async (req, res) => {
   try {
     if (registrationsController && registrationsController.getRegistrations) {
       await registrationsController.getRegistrations(req, res);
     } else {
-      res.status(500).json({ error: 'Controller de inscrições não disponível' });
+      res.status(500).json({ error: 'Controller de listagem não disponível' });
     }
   } catch (error) {
-    console.error('Erro na rota /admin/registrations:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    console.error('❌ Erro na rota GET /registrations:', error);
+    res.status(500).json({ 
+      error: 'Erro interno do servidor',
+      message: error.message 
+    });
   }
 });
 
-// Atualizar status de inscrição - PUT /api/admin/registrations/:id/status
-router.put('/admin/registrations/:id/status', basicAuth, async (req, res) => {
+router.put('/registrations/:id/status', async (req, res) => {
   try {
     if (registrationsController && registrationsController.updateRegistrationStatus) {
       await registrationsController.updateRegistrationStatus(req, res);
     } else {
-      res.status(500).json({ error: 'Controller de inscrições não disponível' });
+      res.status(500).json({ error: 'Controller de atualização não disponível' });
     }
   } catch (error) {
-    console.error('Erro na rota /admin/registrations/:id/status:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
+    console.error('❌ Erro na rota PUT /registrations/:id/status:', error);
+    res.status(500).json({ 
+      error: 'Erro interno do servidor',
+      message: error.message 
+    });
   }
 });
 
-// Rota de teste - GET /api/test
-router.get('/test', (req, res) => {
-  res.json({ 
-    message: 'API Festival de Ballet funcionando!', 
+router.get('/registrations/stats', async (req, res) => {
+  try {
+    if (registrationsController && registrationsController.getRegistrationStats) {
+      await registrationsController.getRegistrationStats(req, res);
+    } else {
+      res.status(500).json({ error: 'Controller de estatísticas não disponível' });
+    }
+  } catch (error) {
+    console.error('❌ Erro na rota /registrations/stats:', error);
+    res.status(500).json({ 
+      error: 'Erro interno do servidor',
+      message: error.message 
+    });
+  }
+});
+
+router.post('/contacts', async (req, res) => {
+  try {
+    if (contactsController && contactsController.createContact) {
+      await contactsController.createContact(req, res);
+    } else {
+      res.status(500).json({ error: 'Controller de contatos não disponível' });
+    }
+  } catch (error) {
+    console.error('❌ Erro na rota /contacts:', error);
+    res.status(500).json({ 
+      error: 'Erro interno do servidor',
+      message: error.message 
+    });
+  }
+});
+
+router.get('/admin/dashboard', async (req, res) => {
+  try {
+    // Buscar dados consolidados para o dashboard
+    const [eventStats, regStats] = await Promise.all([
+      eventsController.getFestivalStats ? 
+        new Promise((resolve) => {
+          eventsController.getFestivalStats({ query: {} }, {
+            json: resolve,
+            status: () => ({ json: resolve })
+          });
+        }) : Promise.resolve({}),
+      registrationsController.getRegistrationStats ?
+        new Promise((resolve) => {
+          registrationsController.getRegistrationStats({ query: {} }, {
+            json: resolve,
+            status: () => ({ json: resolve })
+          });
+        }) : Promise.resolve({})
+    ]);
+    
+    res.json({
+      success: true,
+      message: 'Dashboard FID BSB 2025',
+      data: {
+        evento: {
+          nome: '2º Festival Internacional de Dança de Brasília',
+          periodo: '16 a 18 de Outubro de 2025',
+          local: 'Teatro Nacional Cláudio Santoro - Brasília/DF'
+        },
+        estatisticas: {
+          eventos: eventStats,
+          inscricoes: regStats
+        },
+        ultimaAtualizacao: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    console.error('❌ Erro no dashboard:', error);
+    res.status(500).json({ 
+      error: 'Erro ao carregar dashboard',
+      message: error.message 
+    });
+  }
+});
+
+router.get('/', (req, res) => {
+  res.json({
+    api: '2º Festival Internacional de Dança de Brasília',
+    version: '2.0.0-fidbsb',
     timestamp: new Date().toISOString(),
-    version: '2.0.0',
-    available_routes: [
-      'GET /api/events - Listar eventos disponíveis',
-      'POST /api/registrations/validate - Validar dados de inscrição',
-      'POST /api/registrations - Criar nova inscrição',
-      'POST /api/contacts - Enviar mensagem de contato',
-      'POST /api/payment/create-preference - Criar pagamento (PIX/Cartão)',
-      'POST /api/payment/process-card - Processar cartão de crédito',
-      'GET /api/payment/check/:paymentId - Verificar status pagamento',
-      'POST /api/payment/webhook - Webhook Mercado Pago',
-      '--- ROTAS ADMINISTRATIVAS (autenticação necessária) ---',
-      'GET /api/admin/dashboard - Dashboard administrativo',
-      'GET /api/admin/registrations - Listar inscrições',
-      'PUT /api/admin/registrations/:id/status - Atualizar status'
+    event_info: {
+      name: '2º Festival Internacional de Dança de Brasília',
+      dates: '16 a 18 de Outubro de 2025',
+      location: 'Teatro Nacional Cláudio Santoro - Brasília/DF',
+      organizers: ['Ministério do Turismo', 'Instituto Futuro Certo']
+    },
+    available_routes: {
+      eventos: [
+        'GET /api/events - Listar todos os eventos disponíveis',
+        'GET /api/events/filter?estilo=X&modalidade=Y - Filtrar eventos',
+        'GET /api/events/:id - Buscar evento específico',
+        'GET /api/events/stats - Estatísticas do festival'
+      ],
+      inscricoes: [
+        'POST /api/registrations/validate - Validar dados (documento/email)',
+        'POST /api/registrations - Criar nova inscrição',
+        'GET /api/registrations - Listar inscrições (admin)',
+        'PUT /api/registrations/:id/status - Atualizar status (admin)',
+        'GET /api/registrations/stats - Estatísticas de inscrições'
+      ],
+      administrativas: [
+        'GET /api/admin/dashboard - Dashboard completo',
+        'POST /api/contacts - Enviar mensagem de contato'
+      ]
+    },
+    dance_styles: [
+      'Ballet Clássico de Repertório',
+      'Neoclássico',
+      'Dança Contemporânea',
+      'Jazz',
+      'Danças Urbanas',
+      'Danças Populares',
+      'Danças Tradicionais',
+      'Danças Livres'
     ],
-    removed_routes: [
-      'POST /api/donations - REMOVIDO (funcionalidade descontinuada)'
+    modalities: [
+      'Solo', 'Duo', 'Trio', 'Conjunto',
+      'Variação Feminina', 'Variação Masculina',
+      'Pas de Deux', 'Grand Pas de Deux'
+    ],
+    age_categories: [
+      'PRÉ (9 a 11 anos)',
+      'JÚNIOR (12 a 14 anos)',
+      'SENIOR (15 a 19 anos)',
+      'AVANÇADO (20+ anos)'
     ]
+  });
+});
+
+router.use('*', (req, res) => {
+  res.status(404).json({
+    error: 'Rota não encontrada',
+    message: `A rota ${req.method} ${req.originalUrl} não existe`,
+    availableRoutes: [
+      'GET /api - Informações da API',
+      'GET /api/events - Listar eventos',
+      'POST /api/registrations - Criar inscrição',
+      'POST /api/contacts - Enviar contato'
+    ]
+  });
+});
+
+router.use((error, req, res, next) => {
+  console.error('🚨 Erro não tratado:', error);
+  
+  res.status(500).json({
+    error: 'Erro interno do servidor',
+    message: process.env.NODE_ENV === 'development' ? error.message : 'Algo deu errado',
+    timestamp: new Date().toISOString()
   });
 });
 
