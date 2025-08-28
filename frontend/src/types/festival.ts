@@ -224,24 +224,19 @@ export interface EstatisticasInscricoes {
 // ===== TIPOS DE ESTADO DO FRONTEND =====
 
 export interface EstadoInscricoes {
-  // Dados dos eventos
   todosEventos: FestivalEvent[];
   eventosDisponiveis: FestivalEvent[];
   eventosSelecionados: string[];
   
-  // Dados do formulário
   dadosInscricao: DadosInscricao;
   
-  // Filtros e busca
   filtros: FiltrosEvento;
   textoBusca: string;
   
-  // Estado da aplicação
   etapaAtual: 'selecao' | 'formulario' | 'pagamento' | 'confirmacao';
   carregando: boolean;
   erros: string[];
   
-  // Cálculos
   precoTotal: number;
   resumoInscricao: {
     quantidadeEventos: number;

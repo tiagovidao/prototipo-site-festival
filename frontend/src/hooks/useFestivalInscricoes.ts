@@ -46,7 +46,7 @@ interface UseFestivalInscricoesState {
   textoBusca: string;
   
   // Estado da aplicação
-  etapaAtual: 'selecao' | 'formulario' | 'pagamento' | 'confirmacao';
+  etapaAtual: string;
   carregando: boolean;
   erros: string[];
   
