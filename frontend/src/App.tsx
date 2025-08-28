@@ -10,6 +10,7 @@ import ApiService from './services/api';
 import { 
   type ContactForm, 
 } from './types';
+import MenuItem from './components/MenuItem';
 
 const App = () => {
   // Estados globais
@@ -252,6 +253,12 @@ const App = () => {
     <Router>
       <div className="min-h-screen bg-stone-50 dark:bg-stone-900 flex flex-col">
         <Header 
+          menuItems={menuItems}
+          isMenuOpen={isMenuOpen}
+          setIsMenuOpen={setIsMenuOpen}
+        />
+
+        <MenuItem 
           menuItems={menuItems}
           isMenuOpen={isMenuOpen}
           setIsMenuOpen={setIsMenuOpen}

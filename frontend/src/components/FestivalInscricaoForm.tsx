@@ -42,18 +42,16 @@ const FestivalInscricaoForm = () => {
   const [categoriasExpandidas, setCategoriasExpandidas] = useState<Record<string, boolean>>({});
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
   const [participantes, setParticipantes] = useState([{ nome: '' }]);
+  const [menuCategoriasMobileAberto, setMenuCategoriasMobileAberto] = useState(false);
 
-  // Determinar se há eventos de conjunto selecionados
   const hasConjunto = useMemo(() => {
     return eventosSelecionadosDetalhes.some(evento => evento.modalidade === 'Conjunto');
   }, [eventosSelecionadosDetalhes]);
 
-  // Atualizar participantes quando a modalidade muda
   useEffect(() => {
     if (eventosSelecionadosDetalhes.length > 0) {
       const modalidades = eventosSelecionadosDetalhes.map(e => e.modalidade);
       
-      // Definir número inicial de participantes baseado na modalidade
       let numParticipantes = 1;
       
       if (modalidades.includes('Conjunto')) {
@@ -70,7 +68,6 @@ const FestivalInscricaoForm = () => {
     }
   }, [eventosSelecionadosDetalhes]);
 
-  // Agrupar eventos por estilo
   const eventosPorEstilo = useMemo(() => {
     const agrupados: Record<string, typeof eventosDisponiveis> = {};
     
@@ -83,7 +80,6 @@ const FestivalInscricaoForm = () => {
     return agrupados;
   }, [eventosDisponiveis, estilosDisponiveis]);
 
-  // Expandir automaticamente categorias com eventos selecionados
   useMemo(() => {
     if (eventosSelecionados.length > 0) {
       const novasCategoriasExpandidas: Record<string, boolean> = {};
@@ -101,13 +97,10 @@ const FestivalInscricaoForm = () => {
     }
   }, [eventosSelecionados]);
 
-  // Função para selecionar apenas um evento (nova implementação)
   const selecionarEventoUnico = (eventoId: string) => {
-    // Se o evento já está selecionado, desseleciona
     if (eventosSelecionados.includes(eventoId)) {
       toggleEventoSelecao(eventoId);
     } else {
-      // Remove todos os eventos selecionados antes de adicionar o novo
       eventosSelecionados.forEach(id => toggleEventoSelecao(id));
       toggleEventoSelecao(eventoId);
     }
@@ -125,7 +118,7 @@ const FestivalInscricaoForm = () => {
   };
 
   const adicionarParticipante = () => {
-    if (participantes.length < 20) { // Limite máximo de participantes
+    if (participantes.length < 20) {
       setParticipantes([...participantes, { nome: '' }]);
     }
   };
@@ -208,7 +201,6 @@ const FestivalInscricaoForm = () => {
 
   const renderSelecaoEventos = () => (
     <div className="space-y-6">
-      {/* Header */}
       <div className="text-center">
         <h1 className="text-3xl font-bold text-purple-900 mb-2">
           2º Festival Internacional de Dança de Brasília
@@ -232,10 +224,8 @@ const FestivalInscricaoForm = () => {
         </div>
       </div>
 
-      {/* Filtros e Busca */}
       <div className="bg-white p-4 rounded-xl shadow-sm border-purple-200">
         <div className="flex flex-col md:flex-row gap-4 mb-4">
-          {/* Busca */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <input
@@ -256,10 +246,8 @@ const FestivalInscricaoForm = () => {
           </button>
         </div>
 
-        {/* Filtros expandidos (mobile) ou sempre visíveis (desktop) */}
         <div className={`${filtrosAbertos ? 'block' : 'hidden'} md:block transition-all duration-300`}>
           <div className="flex flex-col md:flex-row gap-4 mb-4">
-            {/* Filtro por Modalidade */}
             <select
               value={filtros.modalidade || ''}
               onChange={(e) => atualizarFiltros({ modalidade: e.target.value || undefined })}
@@ -273,7 +261,6 @@ const FestivalInscricaoForm = () => {
               ))}
             </select>
 
-            {/* Filtro por Categoria */}
             <select
               value={filtros.categoria || ''}
               onChange={(e) => atualizarFiltros({ categoria: e.target.value || undefined })}
@@ -298,8 +285,7 @@ const FestivalInscricaoForm = () => {
         </div>
       </div>
 
-      {/* Navegação por categorias */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border sticky top-2 z-10 border-purple-200">
+      <div className="hidden lg:block bg-white p-4 rounded-xl shadow-sm border sticky top-2 z-10 border-purple-200">
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setCategoriaAtiva('TODOS')}
@@ -332,9 +318,131 @@ const FestivalInscricaoForm = () => {
         </div>
       </div>
 
+      <div className="lg:hidden bg-white p-4 rounded-xl shadow-sm border border-purple-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-medium text-gray-900">Filtrar por Estilo</h3>
+            <p className="text-sm text-gray-600">
+              {categoriaAtiva === 'TODOS' ? 'Todos os Estilos' : categoriaAtiva}
+              {categoriaAtiva !== 'TODOS' && eventosPorEstilo[categoriaAtiva] && (
+                <span className="ml-2 text-purple-600">
+                  ({eventosPorEstilo[categoriaAtiva].length} modalidades)
+                </span>
+              )}
+            </p>
+          </div>
+          <button
+            onClick={() => setMenuCategoriasMobileAberto(true)}
+            className="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors flex items-center gap-2"
+          >
+            <Filter className="w-4 h-4" />
+            Estilos
+          </button>
+        </div>
+      </div>
+
+      {menuCategoriasMobileAberto && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div 
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm" 
+            onClick={() => setMenuCategoriasMobileAberto(false)}
+            aria-hidden="true" 
+          />
+          
+          <div 
+            className="fixed top-0 right-0 h-full w-full max-w-sm bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-purple-900">Filtrar por Estilo</h3>
+              <button 
+                onClick={() => setMenuCategoriasMobileAberto(false)}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Fechar menu de estilos"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-4 h-full overflow-y-auto pb-20">
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    setCategoriaAtiva('TODOS');
+                    setMenuCategoriasMobileAberto(false);
+                  }}
+                  className={`w-full text-left p-4 rounded-xl transition-all ${
+                    categoriaAtiva === 'TODOS'
+                      ? 'bg-purple-600 text-white shadow-md'
+                      : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Todos os Estilos</span>
+                    <span className={`text-xs px-2 py-1 rounded-full ${
+                      categoriaAtiva === 'TODOS'
+                        ? 'bg-purple-100 text-purple-800'
+                        : 'bg-purple-100 text-purple-600'
+                    }`}>
+                      {eventosDisponiveis.length} total
+                    </span>
+                  </div>
+                </button>
+                
+                {estilosDisponiveis.map((estilo) => (
+                  <button
+                    key={estilo.nome}
+                    onClick={() => {
+                      setCategoriaAtiva(estilo.nome);
+                      setMenuCategoriasMobileAberto(false);
+                    }}
+                    className={`w-full text-left p-4 rounded-xl transition-all ${
+                      categoriaAtiva === estilo.nome
+                        ? 'bg-purple-600 text-white shadow-md'
+                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">{estilo.nome}</span>
+                      {eventosPorEstilo[estilo.nome] && eventosPorEstilo[estilo.nome].length > 0 && (
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          categoriaAtiva === estilo.nome
+                            ? 'bg-purple-100 text-purple-800'
+                            : 'bg-purple-100 text-purple-600'
+                        }`}>
+                          {eventosPorEstilo[estilo.nome].length}
+                        </span>
+                      )}
+                    </div>
+                    {estilo.nome === categoriaAtiva && (
+                      <p className="text-sm mt-1 opacity-90">
+                        {eventosPorEstilo[estilo.nome] ? eventosPorEstilo[estilo.nome].length : 0} modalidade{eventosPorEstilo[estilo.nome] && eventosPorEstilo[estilo.nome].length !== 1 ? 's' : ''} disponível{eventosPorEstilo[estilo.nome] && eventosPorEstilo[estilo.nome].length !== 1 ? 'is' : ''}
+                      </p>
+                    )}
+                  </button>
+                ))}
+              </div>
+              
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <button
+                  onClick={() => {
+                    limparFiltros();
+                    setCategoriaAtiva('TODOS');
+                    setMenuCategoriasMobileAberto(false);
+                  }}
+                  className="w-full p-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
+                >
+                  <X className="w-4 h-4" />
+                  Limpar Filtros
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="space-y-4">
         {categoriaAtiva === 'TODOS' ? (
-          // Mostrar todos os eventos agrupados por categoria
           Object.entries(eventosPorEstilo).map(([estilo, eventos]) => 
             eventos.length > 0 ? (
               <div key={estilo} className="bg-white rounded-xl shadow-sm border overflow-hidden border-purple-200">
@@ -371,7 +479,6 @@ const FestivalInscricaoForm = () => {
             ) : null
           )
         ) : (
-          // Mostrar apenas eventos da categoria selecionada
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {eventosPorEstilo[categoriaAtiva]?.map((evento) => (
               <EventoCard 
@@ -399,7 +506,6 @@ const FestivalInscricaoForm = () => {
         )}
       </div>
 
-      {/* Resumo e Navegação */}
       {eventosSelecionados.length > 0 && (
         <div className="bg-purple-50 p-4 rounded-xl sticky bottom-4 shadow-lg border border-purple-200 max-w-md mx-auto">
           <h3 className="text-lg font-semibold mb-3 text-center">Resumo da Seleção</h3>
@@ -432,7 +538,6 @@ const FestivalInscricaoForm = () => {
         </div>
       )}
 
-      {/* Erros */}
       {erros.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <h4 className="font-semibold text-red-800 mb-2">Atenção:</h4>
@@ -448,7 +553,6 @@ const FestivalInscricaoForm = () => {
 
   const renderFormularioDados = () => (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-purple-900">Dados do Participante</h2>
         <button
@@ -459,7 +563,6 @@ const FestivalInscricaoForm = () => {
         </button>
       </div>
 
-      {/* Resumo Selecionado */}
       <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
         <h3 className="font-semibold mb-2">Modalidades Selecionadas:</h3>
         <div className="space-y-2">
@@ -476,7 +579,6 @@ const FestivalInscricaoForm = () => {
         </div>
       </div>
 
-      {/* Formulário */}
       <div className="bg-white p-6 rounded-xl shadow-sm border">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="relative">
@@ -585,7 +687,6 @@ const FestivalInscricaoForm = () => {
           </div>
         </div>
 
-        {/* Campos de participantes baseados na modalidade */}
         <div className="mt-6">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Participantes</h3>
           
@@ -645,7 +746,6 @@ const FestivalInscricaoForm = () => {
         </div>
       </div>
 
-      {/* Navegação */}
       <div className="flex gap-4">
         <button
           onClick={() => irParaEtapa('selecao')}
@@ -661,7 +761,6 @@ const FestivalInscricaoForm = () => {
         </button>
       </div>
 
-      {/* Erros */}
       {erros.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <h4 className="font-semibold text-red-800 mb-2">Corrija os seguintes erros:</h4>
