@@ -2,6 +2,18 @@ import { useFestivalInscricoes } from '../hooks/useFestivalInscricoes';
 import { Search, Filter, Users, Trophy, Clock, DollarSign, ChevronDown, ChevronUp, MapPin, Calendar, User, Mail, Phone, FileText, X, Plus, Minus } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 
+interface EventoCard {
+  id: string;
+  titulo: string;
+  modalidade: string;
+  tempoLimite: string;
+  categoria: string;
+  preco: number;
+  descricao: string;
+  observacoes?: string[];
+  estilo: string;
+}
+
 const FestivalInscricaoForm = () => {
   const {
     eventosDisponiveis,
@@ -132,16 +144,14 @@ const FestivalInscricaoForm = () => {
     novosParticipantes[index].nome = value;
     setParticipantes(novosParticipantes);
     
-    // Atualizar dados de inscrição com todos os participantes
     atualizarDadosInscricao({ 
       ...dadosInscricao, 
       participantes: novosParticipantes 
     });
   };
 
-  // Componente de card para evento (reutilizável)
   const EventoCard = ({ evento, selecionado, onToggle }: { 
-    evento: any; 
+    evento: EventoCard; 
     selecionado: boolean; 
     onToggle: () => void; 
   }) => (
@@ -323,7 +333,6 @@ const FestivalInscricaoForm = () => {
         </div>
       </div>
 
-      {/* Lista de Eventos Organizada por Categoria */}
       <div className="space-y-4">
         {categoriaAtiva === 'TODOS' ? (
           // Mostrar todos os eventos agrupados por categoria

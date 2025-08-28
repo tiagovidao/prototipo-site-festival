@@ -2,6 +2,8 @@ import React from 'react';
 
 interface GenericPageProps {
   title: string;
+  subtitle?: string;
+  content: string;
 }
 
 const GenericPage: React.FC<GenericPageProps> = ({ title }) => {

@@ -23,6 +23,7 @@ interface DadosInscricao {
   coreografo?: string;
   autorizacaoCoreografo?: File;
   observacoes?: string;
+  participantes?: { nome: string }[];
 }
 
 interface FiltrosEventos {
