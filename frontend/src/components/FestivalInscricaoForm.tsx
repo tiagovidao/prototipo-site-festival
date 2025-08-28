@@ -36,7 +36,6 @@ const FestivalInscricaoForm = () => {
     atualizarDadosInscricao,
     irParaEtapa,
     resetarInscricao,
-    calcularIdade
   } = useFestivalInscricoes();
 
   const [categoriaAtiva, setCategoriaAtiva] = useState('TODOS');
@@ -557,11 +556,6 @@ const FestivalInscricaoForm = () => {
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
-            {dadosInscricao.dataNascimento && (
-              <p className="text-sm text-gray-600 mt-1">
-                Idade: {calcularIdade(dadosInscricao.dataNascimento)} anos
-              </p>
-            )}
           </div>
 
           <div>

@@ -1,5 +1,3 @@
-// hooks/useFestivalInscricoes.ts
-// Hook que funciona exclusivamente no frontend com dados do regulamento
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { 
@@ -89,21 +87,7 @@ export const useFestivalInscricoes = () => {
     }
   });
 
-  // Calcular idade com base na data de nascimento
-  const calcularIdade = useCallback((dataNascimento: string): number => {
-    if (!dataNascimento) return 0;
-    
-    const hoje = new Date();
-    const nascimento = new Date(dataNascimento);
-    let idade = hoje.getFullYear() - nascimento.getFullYear();
-    
-    if (hoje.getMonth() < nascimento.getMonth() || 
-        (hoje.getMonth() === nascimento.getMonth() && hoje.getDate() < nascimento.getDate())) {
-      idade--;
-    }
-    
-    return idade;
-  }, []);
+
 
   // Aplicar filtros aos eventos
   const aplicarFiltros = useCallback(() => {
@@ -195,19 +179,9 @@ export const useFestivalInscricoes = () => {
       erros.push('Selecione pelo menos uma modalidade');
     }
     
-    // Validar idade para eventos selecionados
-    const idade = calcularIdade(state.dadosInscricao.dataNascimento);
-    state.eventosSelecionados.forEach(eventoId => {
-      const evento = state.todosEventos.find(e => e.id === eventoId);
-      if (evento) {
-        if (idade < evento.idadeMinima || idade > evento.idadeMaxima) {
-          erros.push(`Idade ${idade} anos não é compatível com a categoria do evento "${evento.titulo}"`);
-        }
-      }
-    });
     
     return { valida: erros.length === 0, erros };
-  }, [state.dadosInscricao, state.eventosSelecionados, state.todosEventos, calcularIdade]);
+  }, [state.dadosInscricao, state.eventosSelecionados, state.todosEventos]);
 
   // Navegar entre etapas
   const irParaEtapa = useCallback((etapa: UseFestivalInscricoesState['etapaAtual']) => {
@@ -316,7 +290,6 @@ export const useFestivalInscricoes = () => {
     irParaEtapa,
     resetarInscricao,
     validarInscricaoCompleta,
-    calcularIdade,
     
     // Dados auxiliares
     ...dadosAuxiliares,
