@@ -50,6 +50,47 @@ const FormularioDados = ({
   adicionarParticipante,
   removerParticipante,
 }: FormularioDadosProps) => {
+  /**
+   * Formata uma string como CPF: 000.000.000-00
+   */
+  const formatCPF = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+    if (digits.length <= 9)
+      return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+  };
+
+  /**
+   * Formata número de telefone brasileiro:
+   * - (DD) NNNN-NNNN  para 10 dígitos
+   * - (DD) NNNNN-NNNN para 11 dígitos (celular com 9)
+   */
+  const formatPhoneBR = (value: string) => {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    const len = digits.length;
+
+    if (len === 0) return '';
+    if (len <= 2) return `(${digits}`;
+    if (len <= 6) {
+      const ddd = digits.slice(0, 2);
+      const rest = digits.slice(2);
+      return `(${ddd}) ${rest}`;
+    }
+    if (len <= 10) {
+      const ddd = digits.slice(0, 2);
+      const part1 = digits.slice(2, 6);
+      const part2 = digits.slice(6);
+      return `(${ddd}) ${part1}-${part2}`;
+    }
+    // len === 11
+    const ddd = digits.slice(0, 2);
+    const part1 = digits.slice(2, 7);
+    const part2 = digits.slice(7);
+    return `(${ddd}) ${part1}-${part2}`;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -104,10 +145,14 @@ const FormularioDados = ({
               <FileText className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                value={dadosInscricao.documento}
-                onChange={(e) => atualizarDadosInscricao({ documento: e.target.value })}
+                value={dadosInscricao.documento || ''}
+                onChange={(e) => {
+                  const formatted = formatCPF(e.target.value);
+                  atualizarDadosInscricao({ documento: formatted });
+                }}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 placeholder="000.000.000-00"
+                inputMode="numeric"
               />
             </div>
           </div>
@@ -136,10 +181,14 @@ const FormularioDados = ({
               <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="tel"
-                value={dadosInscricao.celular}
-                onChange={(e) => atualizarDadosInscricao({ celular: e.target.value })}
+                value={dadosInscricao.celular || ''}
+                onChange={(e) => {
+                  const formatted = formatPhoneBR(e.target.value);
+                  atualizarDadosInscricao({ celular: formatted });
+                }}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="(61) 99999-9999"
+                placeholder="(61) 9XXXX-XXXX"
+                inputMode="tel"
               />
             </div>
           </div>
