@@ -13,9 +13,6 @@ const Pagamento = ({ precoTotal, irParaEtapa, resetarInscricao }: PagamentoProps
           <h3 className="text-lg font-semibold text-green-800 mb-2">
             Inscrição Validada com Sucesso!
           </h3>
-          <p className="text-green-700 mb-4">
-            Sua inscrição está de acordo com o regulamento do festival.
-          </p>
           <div className="text-3xl font-bold text-green-600">
             Total: R$ {precoTotal.toFixed(2).replace('.', ',')}
           </div>

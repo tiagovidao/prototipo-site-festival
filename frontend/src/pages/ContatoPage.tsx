@@ -29,83 +29,83 @@ const Contato: React.FC<ContatoProps> = ({
 }) => {
   return (
     <div className="max-w-2xl mx-auto px-4 py-16">
-      <h1 className="font-serif text-4xl md:text-5xl mb-8 text-center pb-6 border-b border-stone-200 dark:border-stone-700">
+      <h1 className="font-serif text-4xl md:text-5xl mb-8 text-center pb-6 border-b border-stone-200">
         Entre em Contato
       </h1>
       
       <form onSubmit={handleContactSubmit} className="space-y-6">
         <div>
-          <label className="block mb-2 font-medium text-stone-700 dark:text-stone-300">
+          <label className="block mb-2 font-medium text-stone-700">
             Nome *
           </label>
           <input
             type="text"
             value={contactForm.nome}
             onChange={(e) => setContactForm({...contactForm, nome: e.target.value})}
-            className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800"
+            className="w-full px-4 py-3 border border-stone-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
             required
           />
         </div>
         
         <div className="grid md:grid-cols-2 gap-6">
           <div>
-            <label className="block mb-2 font-medium text-stone-700 dark:text-stone-300">
+            <label className="block mb-2 font-medium text-stone-700">
               Email
             </label>
             <input
               type="email"
               value={contactForm.email}
               onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
-              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800"
+              className="w-full px-4 py-3 border border-stone-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
             />
           </div>
           <div>
-            <label className="block mb-2 font-medium text-stone-700 dark:text-stone-300">
+            <label className="block mb-2 font-medium text-stone-700">
               Telefone
             </label>
             <input
               type="tel"
               value={contactForm.telefone}
               onChange={(e) => setContactForm({...contactForm, telefone: e.target.value})}
-              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800"
+              className="w-full px-4 py-3 border border-stone-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
             />
           </div>
         </div>
         
         <div className="grid md:grid-cols-2 gap-6">
           <div>
-            <label className="block mb-2 font-medium text-stone-700 dark:text-stone-300">
+            <label className="block mb-2 font-medium text-stone-700">
               Cidade
             </label>
             <input
               type="text"
               value={contactForm.cidade}
               onChange={(e) => setContactForm({...contactForm, cidade: e.target.value})}
-              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800"
+              className="w-full px-4 py-3 border border-stone-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
             />
           </div>
           <div>
-            <label className="block mb-2 font-medium text-stone-700 dark:text-stone-300">
+            <label className="block mb-2 font-medium text-stone-700">
               Instituição/Escola
             </label>
             <input
               type="text"
               value={contactForm.escola}
               onChange={(e) => setContactForm({...contactForm, escola: e.target.value})}
-              className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-stone-800"
+              className="w-full px-4 py-3 border border-stone-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white"
             />
           </div>
         </div>
         
         <div>
-          <label className="block mb-2 font-medium text-stone-700 dark:text-stone-300">
+          <label className="block mb-2 font-medium text-stone-700">
             Mensagem *
           </label>
           <textarea
             value={contactForm.mensagem}
             onChange={(e) => setContactForm({...contactForm, mensagem: e.target.value})}
             rows={5}
-            className="w-full px-4 py-3 border border-stone-300 dark:border-stone-600 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none bg-white dark:bg-stone-800"
+            className="w-full px-4 py-3 border border-stone-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none bg-white"
             required
           />
         </div>
