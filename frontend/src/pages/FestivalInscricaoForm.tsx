@@ -14,6 +14,7 @@ const FestivalInscricaoForm = () => {
   const {
     eventosDisponiveis,
     eventosSelecionados,
+    participantesPorEvento,
     dadosInscricao,
     filtros,
     textoBusca,
@@ -28,6 +29,7 @@ const FestivalInscricaoForm = () => {
     limparFiltros,
     atualizarBusca,
     toggleEventoSelecao,
+    atualizarParticipantesEvento,
     atualizarDadosInscricao,
     irParaEtapa,
     resetarInscricao,
@@ -49,7 +51,10 @@ const FestivalInscricaoForm = () => {
       let numParticipantes = 1;
       
       if (modalidades.includes('Conjunto')) {
-        numParticipantes = 4;
+        const eventoConjunto = eventosSelecionadosDetalhes.find(e => e.modalidade === 'Conjunto');
+        if (eventoConjunto) {
+          numParticipantes = participantesPorEvento[eventoConjunto.id] || 4;
+        }
       } else if (modalidades.includes('Trio')) {
         numParticipantes = 3;
       } else if (modalidades.some(m => ['Duo', 'Pas de Deux', 'Grand Pas de Deux'].includes(m))) {
@@ -62,9 +67,8 @@ const FestivalInscricaoForm = () => {
         ).slice(0, numParticipantes)
       );
     }
-  }, [eventosSelecionadosDetalhes]);
+  }, [eventosSelecionadosDetalhes, participantesPorEvento]);
 
-  // Sincroniza a etapa do hook com a URL (mantém o estado do hook consistente)
   useEffect(() => {
     if (location.pathname.endsWith('/formulario/pagamento')) {
       irParaEtapa('pagamento');
@@ -73,10 +77,8 @@ const FestivalInscricaoForm = () => {
     } else {
       irParaEtapa('selecao');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
-  // Navega para a etapa desejada e atualiza a URL correta (pagamento é subrota de formulario)
   const goToEtapa = (etapa: string) => {
     irParaEtapa(etapa);
     if (etapa === 'selecao') {
@@ -84,10 +86,8 @@ const FestivalInscricaoForm = () => {
     } else if (etapa === 'formulario') {
       navigate('/inscricoes/formulario', { replace: false });
     } else if (etapa === 'pagamento') {
-      // pagamento agora é subrota de formulário
       navigate('/inscricoes/formulario/pagamento', { replace: false });
     } else {
-      // fallback
       navigate('/inscricoes', { replace: false });
     }
   };
@@ -126,18 +126,17 @@ const FestivalInscricaoForm = () => {
     navigate('/inscricoes');
   };
 
-  // --- Render: usamos rotas internas para selecionar qual "etapa" mostrar ---
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50 to-gray-100 py-8">
       <div className="max-w-6xl mx-auto px-4">
         <Routes>
-          {/* /inscricoes (index) */}
           <Route
             path="/"
             element={
               <SelecaoEventos
                 eventosDisponiveis={eventosDisponiveis}
                 eventosSelecionados={eventosSelecionados}
+                participantesPorEvento={participantesPorEvento}
                 filtros={filtros}
                 textoBusca={textoBusca}
                 erros={erros}
@@ -151,17 +150,18 @@ const FestivalInscricaoForm = () => {
                 limparFiltros={limparFiltros}
                 atualizarBusca={atualizarBusca}
                 toggleEventoSelecao={toggleEventoSelecao}
+                atualizarParticipantesEvento={atualizarParticipantesEvento}
                 irParaEtapa={goToEtapa}
               />
             }
           />
 
-          {/* /inscricoes/formulario */}
-          <Route
+                      <Route
             path="formulario"
             element={
               <FormularioDados
                 eventosSelecionadosDetalhes={eventosSelecionadosDetalhes}
+                participantesPorEvento={participantesPorEvento}
                 precoTotal={precoTotal}
                 dadosInscricao={dadosInscricao as DadosInscricao & { participantes?: Participante[] }}
                 participantes={participantes}
@@ -176,7 +176,6 @@ const FestivalInscricaoForm = () => {
             }
           />
 
-          {/* /inscricoes/formulario/pagamento (subrota da rota formulário) */}
           <Route
             path="formulario/pagamento"
             element={

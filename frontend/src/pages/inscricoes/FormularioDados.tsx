@@ -1,4 +1,5 @@
 import { User, Mail, Phone, Calendar, FileText, Plus, Minus } from 'lucide-react';
+import { calcularPrecoInscricao } from '../../config/festivalEventsConfig';
 
 interface FestivalEvent {
   id: string;
@@ -23,8 +24,13 @@ interface Participante {
   nome: string;
 }
 
+interface ParticipantesPorEvento {
+  [eventoId: string]: number;
+}
+
 interface FormularioDadosProps {
   eventosSelecionadosDetalhes: FestivalEvent[];
+  participantesPorEvento: ParticipantesPorEvento;
   precoTotal: number;
   dadosInscricao: DadosInscricao;
   participantes: Participante[];
@@ -39,6 +45,7 @@ interface FormularioDadosProps {
 
 const FormularioDados = ({
   eventosSelecionadosDetalhes,
+  participantesPorEvento,
   precoTotal,
   dadosInscricao,
   participantes,
@@ -50,9 +57,6 @@ const FormularioDados = ({
   adicionarParticipante,
   removerParticipante,
 }: FormularioDadosProps) => {
-  /**
-   * Formata uma string como CPF: 000.000.000-00
-   */
   const formatCPF = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 11);
     if (digits.length <= 3) return digits;
@@ -62,11 +66,6 @@ const FormularioDados = ({
     return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
   };
 
-  /**
-   * Formata número de telefone brasileiro:
-   * - (DD) NNNN-NNNN  para 10 dígitos
-   * - (DD) NNNNN-NNNN para 11 dígitos (celular com 9)
-   */
   const formatPhoneBR = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 11);
     const len = digits.length;
@@ -84,7 +83,6 @@ const FormularioDados = ({
       const part2 = digits.slice(6);
       return `(${ddd}) ${part1}-${part2}`;
     }
-    // len === 11
     const ddd = digits.slice(0, 2);
     const part1 = digits.slice(2, 7);
     const part2 = digits.slice(7);
@@ -95,23 +93,31 @@ const FormularioDados = ({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-purple-900">Dados do Participante</h2>
-        <button
-          onClick={() => irParaEtapa('selecao')}
-          className="text-purple-600 hover:text-purple-800 flex items-center gap-1"
-        >
-          ← Voltar
-        </button>
       </div>
 
       <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
         <h3 className="font-semibold mb-2">Modalidades Selecionadas:</h3>
         <div className="space-y-2">
-          {eventosSelecionadosDetalhes.map((evento) => (
-            <div key={evento.id} className="flex justify-between items-center text-sm">
-              <span>{evento.titulo}</span>
-              <span className="font-semibold">R$ {evento.preco.toFixed(2).replace('.', ',')}</span>
-            </div>
-          ))}
+          {eventosSelecionadosDetalhes.map((evento) => {
+            const numeroParticipantes = participantesPorEvento[evento.id] || 1;
+            const precoEvento = calcularPrecoInscricao(evento.modalidade, numeroParticipantes);
+            
+            return (
+              <div key={evento.id} className="flex justify-between items-center text-sm">
+                <span>
+                  {evento.titulo}
+                  {evento.modalidade === 'Conjunto' && (
+                    <span className="text-gray-600 ml-1">
+                      ({numeroParticipantes} participantes)
+                    </span>
+                  )}
+                </span>
+                <span className="font-semibold">
+                  R$ {precoEvento.toFixed(2).replace('.', ',')}
+                </span>
+              </div>
+            );
+          })}
         </div>
         <div className="border-t mt-3 pt-3 flex justify-between font-bold">
           <span>Total:</span>

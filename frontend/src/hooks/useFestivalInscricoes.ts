@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { 
   EVENTOS_FESTIVAL, 
@@ -19,7 +18,6 @@ interface DadosInscricao {
   dataNascimento: string;
   escola?: string;
   coreografo?: string;
-  autorizacaoCoreografo?: File;
   observacoes?: string;
   participantes?: { nome: string }[];
 }
@@ -32,25 +30,25 @@ interface FiltrosEventos {
   precMax?: number;
 }
 
+interface ParticipantesPorEvento {
+  [eventoId: string]: number;
+}
+
 interface UseFestivalInscricoesState {
-  // Eventos disponíveis e filtrados
   todosEventos: FestivalEvent[];
   eventosDisponiveis: FestivalEvent[];
   eventosSelecionados: string[];
+  participantesPorEvento: ParticipantesPorEvento;
   
-  // Dados do formulário
   dadosInscricao: DadosInscricao;
   
-  // Filtros e busca
   filtros: FiltrosEventos;
   textoBusca: string;
   
-  // Estado da aplicação
   etapaAtual: string;
   carregando: boolean;
   erros: string[];
   
-  // Cálculos
   precoTotal: number;
   resumoInscricao: {
     quantidadeEventos: number;
@@ -64,6 +62,7 @@ export const useFestivalInscricoes = () => {
     todosEventos: EVENTOS_FESTIVAL,
     eventosDisponiveis: EVENTOS_FESTIVAL,
     eventosSelecionados: [],
+    participantesPorEvento: {},
     dadosInscricao: {
       nome: '',
       documento: '',
@@ -87,18 +86,13 @@ export const useFestivalInscricoes = () => {
     }
   });
 
-
-
-  // Aplicar filtros aos eventos
   const aplicarFiltros = useCallback(() => {
     let eventosFiltrados = [...state.todosEventos];
     
-    // Aplicar filtros de categoria, modalidade, estilo
     if (Object.keys(state.filtros).length > 0) {
       eventosFiltrados = filtrarEventos(eventosFiltrados, state.filtros);
     }
     
-    // Aplicar busca por texto
     if (state.textoBusca) {
       const termo = state.textoBusca.toLowerCase();
       eventosFiltrados = eventosFiltrados.filter(evento =>
@@ -115,7 +109,6 @@ export const useFestivalInscricoes = () => {
     }));
   }, [state.filtros, state.textoBusca, state.todosEventos]);
 
-  // Atualizar filtros
   const atualizarFiltros = useCallback((novosFiltros: Partial<FiltrosEventos>) => {
     setState(prev => ({
       ...prev,
@@ -123,7 +116,6 @@ export const useFestivalInscricoes = () => {
     }));
   }, []);
 
-  // Limpar filtros
   const limparFiltros = useCallback(() => {
     setState(prev => ({
       ...prev,
@@ -132,7 +124,6 @@ export const useFestivalInscricoes = () => {
     }));
   }, []);
 
-  // Atualizar busca por texto
   const atualizarBusca = useCallback((texto: string) => {
     setState(prev => ({
       ...prev,
@@ -140,22 +131,47 @@ export const useFestivalInscricoes = () => {
     }));
   }, []);
 
-  // Selecionar/deselecionar evento
   const toggleEventoSelecao = useCallback((eventoId: string) => {
     setState(prev => {
       const jaSelecionado = prev.eventosSelecionados.includes(eventoId);
-      const novosEventosSelecionados = jaSelecionado
-        ? prev.eventosSelecionados.filter(id => id !== eventoId)
-        : [...prev.eventosSelecionados, eventoId];
+      const evento = prev.todosEventos.find(e => e.id === eventoId);
+      
+      if (jaSelecionado) {
+        const novosEventosSelecionados = prev.eventosSelecionados.filter(id => id !== eventoId);
+        const novosParticipantes = { ...prev.participantesPorEvento };
+        delete novosParticipantes[eventoId];
         
-      return {
-        ...prev,
-        eventosSelecionados: novosEventosSelecionados
-      };
+        return {
+          ...prev,
+          eventosSelecionados: novosEventosSelecionados,
+          participantesPorEvento: novosParticipantes
+        };
+      } else {
+        const novosEventosSelecionados = [...prev.eventosSelecionados, eventoId];
+        const numeroInicial = evento?.modalidade === 'Conjunto' ? 4 : 1;
+        
+        return {
+          ...prev,
+          eventosSelecionados: novosEventosSelecionados,
+          participantesPorEvento: {
+            ...prev.participantesPorEvento,
+            [eventoId]: numeroInicial
+          }
+        };
+      }
     });
   }, []);
 
-  // Atualizar dados da inscrição
+  const atualizarParticipantesEvento = useCallback((eventoId: string, numeroParticipantes: number) => {
+    setState(prev => ({
+      ...prev,
+      participantesPorEvento: {
+        ...prev.participantesPorEvento,
+        [eventoId]: numeroParticipantes
+      }
+    }));
+  }, []);
+
   const atualizarDadosInscricao = useCallback((dados: Partial<DadosInscricao>) => {
     setState(prev => ({
       ...prev,
@@ -163,30 +179,24 @@ export const useFestivalInscricoes = () => {
     }));
   }, []);
 
-  // Validar inscrição completa
   const validarInscricaoCompleta = useCallback((): { valida: boolean; erros: string[] } => {
     const erros: string[] = [];
     
-    // Validar dados básicos
     if (!state.dadosInscricao.nome) erros.push('Nome é obrigatório');
     if (!state.dadosInscricao.documento) erros.push('Documento é obrigatório');
     if (!state.dadosInscricao.email) erros.push('Email é obrigatório');
     if (!state.dadosInscricao.celular) erros.push('Celular é obrigatório');
     if (!state.dadosInscricao.dataNascimento) erros.push('Data de nascimento é obrigatória');
     
-    // Validar se pelo menos um evento foi selecionado
     if (state.eventosSelecionados.length === 0) {
       erros.push('Selecione pelo menos uma modalidade');
     }
     
-    
     return { valida: erros.length === 0, erros };
-  }, [state.dadosInscricao, state.eventosSelecionados, state.todosEventos]);
+  }, [state.dadosInscricao, state.eventosSelecionados]);
 
-  // Navegar entre etapas
   const irParaEtapa = useCallback((etapa: UseFestivalInscricoesState['etapaAtual']) => {
     if (etapa === 'formulario') {
-      // Validar se há eventos selecionados antes de ir para o formulário
       if (state.eventosSelecionados.length === 0) {
         setState(prev => ({ ...prev, erros: ['Selecione pelo menos uma modalidade'] }));
         return;
@@ -194,7 +204,6 @@ export const useFestivalInscricoes = () => {
     }
     
     if (etapa === 'pagamento') {
-      // Validar formulário antes de ir para pagamento
       const validacao = validarInscricaoCompleta();
       if (!validacao.valida) {
         setState(prev => ({ ...prev, erros: validacao.erros }));
@@ -209,11 +218,11 @@ export const useFestivalInscricoes = () => {
     }));
   }, [state.eventosSelecionados.length, validarInscricaoCompleta]);
 
-  // Resetar tudo
   const resetarInscricao = useCallback(() => {
     setState(prev => ({
       ...prev,
       eventosSelecionados: [],
+      participantesPorEvento: {},
       dadosInscricao: {
         nome: '',
         documento: '',
@@ -231,14 +240,14 @@ export const useFestivalInscricoes = () => {
     }));
   }, []);
 
-  // Calcular preço total e resumo automaticamente
   const calculos = useMemo(() => {
     const eventosSelecionadosDetalhes = state.eventosSelecionados
       .map(id => state.todosEventos.find(e => e.id === id))
       .filter(Boolean) as FestivalEvent[];
     
     const precoTotal = eventosSelecionadosDetalhes.reduce((total, evento) => {
-      return total + evento.preco;
+      const numeroParticipantes = state.participantesPorEvento[evento.id] || 1;
+      return total + calcularPrecoInscricao(evento.modalidade, numeroParticipantes);
     }, 0);
     
     const estilosUnicos = [...new Set(eventosSelecionadosDetalhes.map(e => e.estilo))];
@@ -253,14 +262,12 @@ export const useFestivalInscricoes = () => {
       },
       eventosSelecionadosDetalhes
     };
-  }, [state.eventosSelecionados, state.todosEventos]);
+  }, [state.eventosSelecionados, state.todosEventos, state.participantesPorEvento]);
 
-  // Efeito para aplicar filtros quando mudarem
   useEffect(() => {
     aplicarFiltros();
   }, [aplicarFiltros]);
 
-  // Efeito para atualizar cálculos quando mudarem os eventos selecionados
   useEffect(() => {
     setState(prev => ({
       ...prev,
@@ -269,7 +276,6 @@ export const useFestivalInscricoes = () => {
     }));
   }, [calculos]);
 
-  // Dados para componentes auxiliares
   const dadosAuxiliares = {
     estilosDisponiveis: Object.values(ESTILOS_DANCA),
     modalidadesDisponiveis: Object.values(MODALIDADES_PRECOS),
@@ -278,23 +284,20 @@ export const useFestivalInscricoes = () => {
   };
 
   return {
-    // Estado
     ...state,
     
-    // Funções de controle
     atualizarFiltros,
     limparFiltros,
     atualizarBusca,
     toggleEventoSelecao,
+    atualizarParticipantesEvento,
     atualizarDadosInscricao,
     irParaEtapa,
     resetarInscricao,
     validarInscricaoCompleta,
     
-    // Dados auxiliares
     ...dadosAuxiliares,
     
-    // Utilitários
     filtrarEventos: (filtros: FiltrosEventos) => filtrarEventos(state.todosEventos, filtros),
     calcularPrecoInscricao,
     validarInscricao

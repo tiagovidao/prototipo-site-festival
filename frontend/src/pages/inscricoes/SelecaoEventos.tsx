@@ -37,10 +37,25 @@ interface ResumoInscricao {
   estilosUnicos: string[];
 }
 
+interface ParticipantesPorEvento {
+  [eventoId: string]: number;
+}
+
+interface FiltrosEvento {
+  modalidade?: string;
+  categoria?: string;
+  idadeMin?: number;
+  idadeMax?: number;
+  precoMin?: number;
+  precoMax?: number;
+  disponivel?: boolean;
+}
+
 interface SelecaoEventosProps {
   eventosDisponiveis: Evento[];
   eventosSelecionados: string[];
-  filtros: any;
+  participantesPorEvento: ParticipantesPorEvento;
+  filtros: FiltrosEvento;
   textoBusca: string;
   erros: string[];
   precoTotal: number;
@@ -49,16 +64,18 @@ interface SelecaoEventosProps {
   estilosDisponiveis: Estilo[];
   modalidadesDisponiveis: Modalidade[];
   categoriasDisponiveis: Categoria[];
-  atualizarFiltros: (filtros: any) => void;
+  atualizarFiltros: (filtros: Partial<FiltrosEvento>) => void;
   limparFiltros: () => void;
   atualizarBusca: (texto: string) => void;
   toggleEventoSelecao: (eventoId: string) => void;
+  atualizarParticipantesEvento: (eventoId: string, numero: number) => void;
   irParaEtapa: (etapa: string) => void;
 }
 
 const SelecaoEventos = ({
   eventosDisponiveis,
   eventosSelecionados,
+  participantesPorEvento,
   filtros,
   textoBusca,
   erros,
@@ -71,6 +88,7 @@ const SelecaoEventos = ({
   limparFiltros,
   atualizarBusca,
   toggleEventoSelecao,
+  atualizarParticipantesEvento,
   irParaEtapa,
 }: SelecaoEventosProps) => {
   const [categoriaAtiva, setCategoriaAtiva] = useState('TODOS');
@@ -110,6 +128,17 @@ const SelecaoEventos = ({
     setFiltrosAbertos(!filtrosAbertos);
   };
 
+  const renderEventoCard = (evento: Evento) => (
+    <EventoCard 
+      key={evento.id} 
+      evento={evento} 
+      selecionado={eventosSelecionados.includes(evento.id)}
+      onToggle={() => selecionarEventoUnico(evento.id)}
+      numeroParticipantes={participantesPorEvento[evento.id] || (evento.modalidade === 'Conjunto' ? 4 : 1)}
+      onParticipantesChange={(numero) => atualizarParticipantesEvento(evento.id, numero)}
+    />
+  );
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -130,7 +159,7 @@ const SelecaoEventos = ({
         <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
           <p className="text-sm text-purple-800">
             <strong>Atenção:</strong> Selecione as modalidades conforme sua categoria de idade. 
-            As inscrições seguem rigorosamente o regulamento oficial.
+            Para modalidade "Conjunto", o valor é por participante com mínimo de 4 pessoas.
           </p>
         </div>
       </div>
@@ -182,14 +211,7 @@ const SelecaoEventos = ({
                 
                 {categoriasExpandidas[estilo] && (
                   <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {eventos.map((evento) => (
-                      <EventoCard 
-                        key={evento.id} 
-                        evento={evento} 
-                        selecionado={eventosSelecionados.includes(evento.id)}
-                        onToggle={() => selecionarEventoUnico(evento.id)}
-                      />
-                    ))}
+                    {eventos.map(renderEventoCard)}
                   </div>
                 )}
               </div>
@@ -197,14 +219,7 @@ const SelecaoEventos = ({
           )
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {eventosPorEstilo[categoriaAtiva]?.map((evento) => (
-              <EventoCard 
-                key={evento.id} 
-                evento={evento} 
-                selecionado={eventosSelecionados.includes(evento.id)}
-                onToggle={() => selecionarEventoUnico(evento.id)}
-              />
-            ))}
+            {eventosPorEstilo[categoriaAtiva]?.map(renderEventoCard)}
           </div>
         )}
         
