@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
+import logo from '../assets/logo.png';
 
 interface MenuItem {
   id: string;
@@ -22,14 +23,15 @@ const Header: React.FC<HeaderProps> = ({
   const location = useLocation();
 
   return (
-    <header className="sticky top-0 z-50 border-b border-stone-200 bg-stone-100">
+     <header className="sticky top-0 z-50 border-b border-stone-200 bg-stone-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-20">
-          <Link 
-            to="/" 
-            className="font-serif text-2xl md:text-3xl cursor-pointer"
-          >
-            Festival <span className="text-purple-700">Cultural</span>
+          <Link to="/" className="flex items-center">
+            <img 
+              src={logo} 
+              alt="Festival Cultural" 
+              className="h-12 w-auto object-contain" 
+            />
           </Link>
           
           <nav className="hidden lg:flex items-center gap-2">

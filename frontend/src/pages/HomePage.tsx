@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import logo from '../assets/logo.png';
 
 const Home: React.FC = () => {
   return (
@@ -8,7 +9,11 @@ const Home: React.FC = () => {
       <section className="text-center bg-stone-100 py-24">
         <div className="max-w-4xl mx-auto px-4">
           <h1 className="font-serif text-5xl md:text-7xl mb-6 text-stone-900">
-            Festival <span className="text-purple-700">Cultural</span>
+            <img
+              src={logo}
+              alt="Festival Cultural"
+              className="h-28 md:h-40 w-auto object-contain mx-auto"
+            />
           </h1>
 
           <Link 
@@ -20,7 +25,6 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* About Section */}
       <section className="max-w-6xl mx-auto px-4">
         <div className="grid md:grid-cols-2 gap-16 items-center">
           <div>

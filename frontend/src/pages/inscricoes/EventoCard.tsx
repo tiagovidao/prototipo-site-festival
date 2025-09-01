@@ -40,7 +40,8 @@ const EventoCard = ({
 
   return (
     <div
-      className={`p-4 border rounded-xl transition-all ${
+      onClick={onToggle}
+      className={`p-4 border rounded-xl transition-all cursor-pointer ${
         selecionado
           ? 'border-purple-500 bg-purple-50 shadow-md'
           : 'border-gray-200 hover:border-purple-300 bg-white hover:shadow-sm'
@@ -50,10 +51,9 @@ const EventoCard = ({
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-3">
             <div 
-              className={`flex items-center justify-center w-6 h-6 rounded-full border-2 cursor-pointer ${
+              className={`flex items-center justify-center w-6 h-6 rounded-full border-2 ${
                 selecionado ? 'bg-purple-600 border-purple-600' : 'border-gray-300'
               }`}
-              onClick={onToggle}
             >
               {selecionado && <div className="w-2 h-2 bg-white rounded-full"></div>}
             </div>
@@ -96,7 +96,10 @@ const EventoCard = ({
                 </span>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => handleParticipantesChange(-1)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleParticipantesChange(-1);
+                    }}
                     disabled={numeroParticipantes <= minParticipantes}
                     className="w-6 h-6 rounded-full border border-blue-300 flex items-center justify-center hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -106,7 +109,10 @@ const EventoCard = ({
                     {numeroParticipantes}
                   </span>
                   <button
-                    onClick={() => handleParticipantesChange(1)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleParticipantesChange(1);
+                    }}
                     disabled={numeroParticipantes >= 20}
                     className="w-6 h-6 rounded-full border border-blue-300 flex items-center justify-center hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
                   >

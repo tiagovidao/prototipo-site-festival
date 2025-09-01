@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, FileText, Calendar } from 'lucide-react';
+import logo from '../assets/logo.png';
 
 const Footer: React.FC = () => {
   return (
@@ -8,9 +9,11 @@ const Footer: React.FC = () => {
       <div className="max-w-6xl mx-auto px-4">
         <div className="grid md:grid-cols-3 gap-12">
           <div>
-            <h3 className="font-serif text-2xl mb-4">
-              Festival <span className="text-purple-700">Cultural</span>
-            </h3>
+            <img
+              src={logo}
+              alt="Festival Cultural"
+              className="h-10 md:h-14 w-auto object-contain mb-4"
+            />
             <p className="text-stone-600">
               Cras in feugiat nisi, ac vehicula libero. Aenean nec orci sed metus imperdiet gravida sed et nisl.
             </p>
