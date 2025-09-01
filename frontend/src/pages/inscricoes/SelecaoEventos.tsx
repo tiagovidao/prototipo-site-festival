@@ -177,7 +177,7 @@ const SelecaoEventos = ({
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-purple-200 p-6">
-        <h2 className="text-xl font-semibold text-purple-900 mb-4">Escolha sua Modalidade</h2>
+        <h2 className="text-xl font-semibold text-purple-900 mb-4">Realize a sua Inscrição!</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           {renderDropdown(
