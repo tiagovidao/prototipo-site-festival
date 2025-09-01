@@ -87,6 +87,7 @@ const EventoCard = ({
             </div>
           </div>
 
+          {/* Controle de participantes para modalidade Conjunto */}
           {isConjunto && selecionado && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
               <div className="flex items-center justify-between mb-2">
@@ -123,22 +124,6 @@ const EventoCard = ({
           )}
 
           <p className="text-gray-600 text-sm mb-2 line-clamp-2">{evento.descricao}</p>
-          
-          {evento.observacoes && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-2 mt-2">
-              <p className="text-xs text-yellow-800">
-                <strong>Observação:</strong> {evento.observacoes.join('; ')}
-              </p>
-            </div>
-          )}
-
-          {isConjunto && !selecionado && (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 mt-2">
-              <p className="text-xs text-gray-600">
-                <strong>Modalidade Conjunto:</strong> R$ {evento.preco.toFixed(2).replace('.', ',')} por participante (mínimo {minParticipantes} pessoas)
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </div>

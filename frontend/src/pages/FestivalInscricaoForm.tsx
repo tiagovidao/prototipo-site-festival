@@ -12,22 +12,15 @@ interface Participante {
 
 const FestivalInscricaoForm = () => {
   const {
-    eventosDisponiveis,
+    todosEventos,
     eventosSelecionados,
     participantesPorEvento,
     dadosInscricao,
-    filtros,
-    textoBusca,
     erros,
     precoTotal,
     resumoInscricao,
     eventosSelecionadosDetalhes,
     estilosDisponiveis,
-    modalidadesDisponiveis,
-    categoriasDisponiveis,
-    atualizarFiltros,
-    limparFiltros,
-    atualizarBusca,
     toggleEventoSelecao,
     atualizarParticipantesEvento,
     atualizarDadosInscricao,
@@ -40,10 +33,12 @@ const FestivalInscricaoForm = () => {
 
   const [participantes, setParticipantes] = useState<Participante[]>([{ nome: '' }]);
 
+  // Verifica se tem modalidade conjunto selecionada
   const hasConjunto = useMemo(() => {
     return eventosSelecionadosDetalhes.some(evento => evento.modalidade === 'Conjunto');
   }, [eventosSelecionadosDetalhes]);
 
+  // Atualiza número de participantes baseado na modalidade
   useEffect(() => {
     if (eventosSelecionadosDetalhes.length > 0) {
       const modalidades = eventosSelecionadosDetalhes.map(e => e.modalidade);
@@ -69,6 +64,7 @@ const FestivalInscricaoForm = () => {
     }
   }, [eventosSelecionadosDetalhes, participantesPorEvento]);
 
+  // Sincroniza rota com etapa
   useEffect(() => {
     if (location.pathname.endsWith('/formulario/pagamento')) {
       irParaEtapa('pagamento');
@@ -134,21 +130,14 @@ const FestivalInscricaoForm = () => {
             path="/"
             element={
               <SelecaoEventos
-                eventosDisponiveis={eventosDisponiveis}
+                eventosDisponiveis={todosEventos}
                 eventosSelecionados={eventosSelecionados}
                 participantesPorEvento={participantesPorEvento}
-                filtros={filtros}
-                textoBusca={textoBusca}
                 erros={erros}
                 precoTotal={precoTotal}
                 resumoInscricao={resumoInscricao}
                 eventosSelecionadosDetalhes={eventosSelecionadosDetalhes}
                 estilosDisponiveis={estilosDisponiveis}
-                modalidadesDisponiveis={modalidadesDisponiveis}
-                categoriasDisponiveis={categoriasDisponiveis}
-                atualizarFiltros={atualizarFiltros}
-                limparFiltros={limparFiltros}
-                atualizarBusca={atualizarBusca}
                 toggleEventoSelecao={toggleEventoSelecao}
                 atualizarParticipantesEvento={atualizarParticipantesEvento}
                 irParaEtapa={goToEtapa}
@@ -156,7 +145,7 @@ const FestivalInscricaoForm = () => {
             }
           />
 
-                      <Route
+          <Route
             path="formulario"
             element={
               <FormularioDados

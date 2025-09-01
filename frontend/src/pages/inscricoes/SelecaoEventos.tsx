@@ -1,8 +1,6 @@
-import { Filter, X, ChevronUp, ChevronDown, Calendar, MapPin } from 'lucide-react';
+import { ChevronUp, ChevronDown, Calendar, MapPin } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import EventoCard from './EventoCard';
-import Filtros from './Filtros';
-import MenuCategorias from './MenuCategorias';
 
 interface Evento {
   id: string;
@@ -20,53 +18,23 @@ interface Estilo {
   nome: string;
 }
 
-interface Modalidade {
-  nome: string;
-  preco: number;
-}
-
-interface Categoria {
-  codigo: string;
-  nome: string;
-  idadeMin: number;
-  idadeMax: number;
-}
-
 interface ResumoInscricao {
-  quantidadeEventos: number;
-  estilosUnicos: string[];
+  tituloEvento: string;
 }
 
 interface ParticipantesPorEvento {
   [eventoId: string]: number;
 }
 
-interface FiltrosEvento {
-  modalidade?: string;
-  categoria?: string;
-  idadeMin?: number;
-  idadeMax?: number;
-  precoMin?: number;
-  precoMax?: number;
-  disponivel?: boolean;
-}
-
 interface SelecaoEventosProps {
   eventosDisponiveis: Evento[];
   eventosSelecionados: string[];
   participantesPorEvento: ParticipantesPorEvento;
-  filtros: FiltrosEvento;
-  textoBusca: string;
   erros: string[];
   precoTotal: number;
   resumoInscricao: ResumoInscricao;
   eventosSelecionadosDetalhes: Evento[];
   estilosDisponiveis: Estilo[];
-  modalidadesDisponiveis: Modalidade[];
-  categoriasDisponiveis: Categoria[];
-  atualizarFiltros: (filtros: Partial<FiltrosEvento>) => void;
-  limparFiltros: () => void;
-  atualizarBusca: (texto: string) => void;
   toggleEventoSelecao: (eventoId: string) => void;
   atualizarParticipantesEvento: (eventoId: string, numero: number) => void;
   irParaEtapa: (etapa: string) => void;
@@ -76,26 +44,17 @@ const SelecaoEventos = ({
   eventosDisponiveis,
   eventosSelecionados,
   participantesPorEvento,
-  filtros,
-  textoBusca,
   erros,
   precoTotal,
   resumoInscricao,
   estilosDisponiveis,
-  modalidadesDisponiveis,
-  categoriasDisponiveis,
-  atualizarFiltros,
-  limparFiltros,
-  atualizarBusca,
   toggleEventoSelecao,
   atualizarParticipantesEvento,
   irParaEtapa,
 }: SelecaoEventosProps) => {
-  const [categoriaAtiva, setCategoriaAtiva] = useState('TODOS');
   const [categoriasExpandidas, setCategoriasExpandidas] = useState<Record<string, boolean>>({});
-  const [filtrosAbertos, setFiltrosAbertos] = useState(false);
-  const [menuCategoriasMobileAberto, setMenuCategoriasMobileAberto] = useState(false);
 
+  // Agrupa eventos por estilo
   const eventosPorEstilo = useMemo(() => {
     const agrupados: Record<string, Evento[]> = {};
     
@@ -108,15 +67,6 @@ const SelecaoEventos = ({
     return agrupados;
   }, [eventosDisponiveis, estilosDisponiveis]);
 
-  const selecionarEventoUnico = (eventoId: string) => {
-    if (eventosSelecionados.includes(eventoId)) {
-      toggleEventoSelecao(eventoId);
-    } else {
-      eventosSelecionados.forEach(id => toggleEventoSelecao(id));
-      toggleEventoSelecao(eventoId);
-    }
-  };
-
   const toggleExpandirCategoria = (categoria: string) => {
     setCategoriasExpandidas(prev => ({
       ...prev,
@@ -124,16 +74,12 @@ const SelecaoEventos = ({
     }));
   };
 
-  const toggleFiltros = () => {
-    setFiltrosAbertos(!filtrosAbertos);
-  };
-
   const renderEventoCard = (evento: Evento) => (
     <EventoCard 
       key={evento.id} 
       evento={evento} 
       selecionado={eventosSelecionados.includes(evento.id)}
-      onToggle={() => selecionarEventoUnico(evento.id)}
+      onToggle={() => toggleEventoSelecao(evento.id)}
       numeroParticipantes={participantesPorEvento[evento.id] || (evento.modalidade === 'Conjunto' ? 4 : 1)}
       onParticipantesChange={(numero) => atualizarParticipantesEvento(evento.id, numero)}
     />
@@ -141,6 +87,7 @@ const SelecaoEventos = ({
 
   return (
     <div className="space-y-6">
+      {/* Header do Festival */}
       <div className="text-center">
         <h1 className="text-3xl font-bold text-purple-900 mb-2">
           2º Festival Internacional de Dança de Brasília
@@ -158,109 +105,61 @@ const SelecaoEventos = ({
         </div>
         <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
           <p className="text-sm text-purple-800">
-            <strong>Atenção:</strong> Selecione as modalidades conforme sua categoria de idade. 
+            <strong>Atenção:</strong> Selecione UMA modalidade conforme sua categoria de idade. 
             Para modalidade "Conjunto", o valor é por participante com mínimo de 4 pessoas.
           </p>
         </div>
       </div>
 
-      <Filtros
-        filtros={filtros}
-        textoBusca={textoBusca}
-        filtrosAbertos={filtrosAbertos}
-        modalidadesDisponiveis={modalidadesDisponiveis}
-        categoriasDisponiveis={categoriasDisponiveis}
-        atualizarFiltros={atualizarFiltros}
-        atualizarBusca={atualizarBusca}
-        limparFiltros={limparFiltros}
-        toggleFiltros={toggleFiltros}
-      />
-
-      <MenuCategorias
-        categoriaAtiva={categoriaAtiva}
-        setCategoriaAtiva={setCategoriaAtiva}
-        estilosDisponiveis={estilosDisponiveis}
-        eventosPorEstilo={eventosPorEstilo}
-        eventosDisponiveis={eventosDisponiveis}
-        menuCategoriasMobileAberto={menuCategoriasMobileAberto}
-        setMenuCategoriasMobileAberto={setMenuCategoriasMobileAberto}
-        limparFiltros={limparFiltros}
-      />
-
+      {/* Lista de Eventos por Estilo */}
       <div className="space-y-4">
-        {categoriaAtiva === 'TODOS' ? (
-          Object.entries(eventosPorEstilo).map(([estilo, eventos]) => 
-            eventos.length > 0 ? (
-              <div key={estilo} className="bg-white rounded-xl shadow-sm border overflow-hidden border-purple-200">
-                <button
-                  className="w-full p-4 flex justify-between items-center bg-purple-50 hover:bg-purple-100 transition-colors"
-                  onClick={() => toggleExpandirCategoria(estilo)}
-                >
-                  <div className="flex items-center gap-3">
-                    <h3 className="font-semibold text-lg text-purple-900">{estilo}</h3>
-                    <span className="bg-purple-600 text-white text-xs px-2 py-1 rounded-full">
-                      {eventos.length} modalidade{eventos.length !== 1 ? 's' : ''}
-                    </span>
-                  </div>
-                  {categoriasExpandidas[estilo] ? (
-                    <ChevronUp className="text-purple-600" />
-                  ) : (
-                    <ChevronDown className="text-purple-600" />
-                  )}
-                </button>
-                
-                {categoriasExpandidas[estilo] && (
-                  <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {eventos.map(renderEventoCard)}
-                  </div>
+        {Object.entries(eventosPorEstilo).map(([estilo, eventos]) => 
+          eventos.length > 0 ? (
+            <div key={estilo} className="bg-white rounded-xl shadow-sm border overflow-hidden border-purple-200">
+              <button
+                className="w-full p-4 flex justify-between items-center bg-purple-50 hover:bg-purple-100 transition-colors"
+                onClick={() => toggleExpandirCategoria(estilo)}
+              >
+                <div className="flex items-center gap-3">
+                  <h3 className="font-semibold text-lg text-purple-900">{estilo}</h3>
+                </div>
+                {categoriasExpandidas[estilo] ? (
+                  <ChevronUp className="text-purple-600" />
+                ) : (
+                  <ChevronDown className="text-purple-600" />
                 )}
-              </div>
-            ) : null
-          )
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {eventosPorEstilo[categoriaAtiva]?.map(renderEventoCard)}
-          </div>
+              </button>
+              
+              {categoriasExpandidas[estilo] && (
+                <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {eventos.map(renderEventoCard)}
+                </div>
+              )}
+            </div>
+          ) : null
         )}
         
         {eventosDisponiveis.length === 0 && (
           <div className="text-center py-8 text-gray-500">
-            <Filter className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-            <p>Nenhuma modalidade encontrada com os filtros aplicados.</p>
-            <button
-              onClick={limparFiltros}
-              className="mt-2 text-purple-600 hover:text-purple-800 flex items-center justify-center gap-1 mx-auto"
-            >
-              <X className="w-4 h-4" />
-              Limpar filtros
-            </button>
+            <p>Nenhuma modalidade encontrada.</p>
           </div>
         )}
       </div>
 
+      {/* Resumo da Seleção - apenas quando algo for selecionado */}
       {eventosSelecionados.length > 0 && (
         <div className="bg-purple-50 p-4 rounded-xl sticky bottom-4 shadow-lg border border-purple-200 max-w-md mx-auto">
-          <h3 className="text-lg font-semibold mb-3 text-center">Resumo da Seleção</h3>
-          <div className="grid grid-cols-3 gap-3 mb-3">
-            <div className="text-center">
-              <div className="text-xl font-bold text-purple-600">
-                {resumoInscricao.quantidadeEventos}
-              </div>
-              <div className="text-xs text-gray-600">Modalidades</div>
+          <h3 className="text-lg font-semibold mb-3 text-center">Modalidade Selecionada</h3>
+          
+          <div className="text-center mb-3">
+            <div className="text-sm text-purple-700 font-medium mb-1">
+              {resumoInscricao.tituloEvento}
             </div>
-            <div className="text-center">
-              <div className="text-xl font-bold text-purple-600">
-                {resumoInscricao.estilosUnicos.length}
-              </div>
-              <div className="text-xs text-gray-600">Estilos</div>
-            </div>
-            <div className="text-center">
-              <div className="text-xl font-bold text-green-600">
-                R$ {precoTotal.toFixed(2).replace('.', ',')}
-              </div>
-              <div className="text-xs text-gray-600">Total</div>
+            <div className="text-2xl font-bold text-green-600">
+              R$ {precoTotal.toFixed(2).replace('.', ',')}
             </div>
           </div>
+          
           <button
             onClick={() => irParaEtapa('formulario')}
             className="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700 transition-colors font-semibold text-sm"
@@ -270,6 +169,7 @@ const SelecaoEventos = ({
         </div>
       )}
 
+      {/* Mensagens de Erro */}
       {erros.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <h4 className="font-semibold text-red-800 mb-2">Atenção:</h4>

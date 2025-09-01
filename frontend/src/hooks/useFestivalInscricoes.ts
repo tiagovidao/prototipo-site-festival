@@ -1,9 +1,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { 
   EVENTOS_FESTIVAL, 
-  filtrarEventos, 
   calcularPrecoInscricao,
-  validarInscricao,
   ESTILOS_DANCA,
   MODALIDADES_PRECOS,
   CATEGORIAS_IDADE,
@@ -22,28 +20,16 @@ interface DadosInscricao {
   participantes?: { nome: string }[];
 }
 
-interface FiltrosEventos {
-  estilo?: string;
-  modalidade?: string;
-  categoria?: string;
-  idadeBailarino?: number;
-  precMax?: number;
-}
-
 interface ParticipantesPorEvento {
   [eventoId: string]: number;
 }
 
 interface UseFestivalInscricoesState {
   todosEventos: FestivalEvent[];
-  eventosDisponiveis: FestivalEvent[];
   eventosSelecionados: string[];
   participantesPorEvento: ParticipantesPorEvento;
   
   dadosInscricao: DadosInscricao;
-  
-  filtros: FiltrosEventos;
-  textoBusca: string;
   
   etapaAtual: string;
   carregando: boolean;
@@ -51,16 +37,13 @@ interface UseFestivalInscricoesState {
   
   precoTotal: number;
   resumoInscricao: {
-    quantidadeEventos: number;
-    estilosUnicos: string[];
-    modalidadesUnicas: string[];
+    tituloEvento: string;
   };
 }
 
 export const useFestivalInscricoes = () => {
   const [state, setState] = useState<UseFestivalInscricoesState>({
     todosEventos: EVENTOS_FESTIVAL,
-    eventosDisponiveis: EVENTOS_FESTIVAL,
     eventosSelecionados: [],
     participantesPorEvento: {},
     dadosInscricao: {
@@ -73,63 +56,14 @@ export const useFestivalInscricoes = () => {
       coreografo: '',
       observacoes: ''
     },
-    filtros: {},
-    textoBusca: '',
     etapaAtual: 'selecao',
     carregando: false,
     erros: [],
     precoTotal: 0,
     resumoInscricao: {
-      quantidadeEventos: 0,
-      estilosUnicos: [],
-      modalidadesUnicas: []
+      tituloEvento: ''
     }
   });
-
-  const aplicarFiltros = useCallback(() => {
-    let eventosFiltrados = [...state.todosEventos];
-    
-    if (Object.keys(state.filtros).length > 0) {
-      eventosFiltrados = filtrarEventos(eventosFiltrados, state.filtros);
-    }
-    
-    if (state.textoBusca) {
-      const termo = state.textoBusca.toLowerCase();
-      eventosFiltrados = eventosFiltrados.filter(evento =>
-        evento.titulo.toLowerCase().includes(termo) ||
-        evento.estilo.toLowerCase().includes(termo) ||
-        evento.modalidade.toLowerCase().includes(termo) ||
-        evento.descricao.toLowerCase().includes(termo)
-      );
-    }
-    
-    setState(prev => ({
-      ...prev,
-      eventosDisponiveis: eventosFiltrados
-    }));
-  }, [state.filtros, state.textoBusca, state.todosEventos]);
-
-  const atualizarFiltros = useCallback((novosFiltros: Partial<FiltrosEventos>) => {
-    setState(prev => ({
-      ...prev,
-      filtros: { ...prev.filtros, ...novosFiltros }
-    }));
-  }, []);
-
-  const limparFiltros = useCallback(() => {
-    setState(prev => ({
-      ...prev,
-      filtros: {},
-      textoBusca: ''
-    }));
-  }, []);
-
-  const atualizarBusca = useCallback((texto: string) => {
-    setState(prev => ({
-      ...prev,
-      textoBusca: texto
-    }));
-  }, []);
 
   const toggleEventoSelecao = useCallback((eventoId: string) => {
     setState(prev => {
@@ -137,24 +71,23 @@ export const useFestivalInscricoes = () => {
       const evento = prev.todosEventos.find(e => e.id === eventoId);
       
       if (jaSelecionado) {
-        const novosEventosSelecionados = prev.eventosSelecionados.filter(id => id !== eventoId);
+        // Remove evento da seleção
         const novosParticipantes = { ...prev.participantesPorEvento };
         delete novosParticipantes[eventoId];
         
         return {
           ...prev,
-          eventosSelecionados: novosEventosSelecionados,
+          eventosSelecionados: [],
           participantesPorEvento: novosParticipantes
         };
       } else {
-        const novosEventosSelecionados = [...prev.eventosSelecionados, eventoId];
+        // Seleciona apenas um evento por vez
         const numeroInicial = evento?.modalidade === 'Conjunto' ? 4 : 1;
         
         return {
           ...prev,
-          eventosSelecionados: novosEventosSelecionados,
+          eventosSelecionados: [eventoId],
           participantesPorEvento: {
-            ...prev.participantesPorEvento,
             [eventoId]: numeroInicial
           }
         };
@@ -189,7 +122,7 @@ export const useFestivalInscricoes = () => {
     if (!state.dadosInscricao.dataNascimento) erros.push('Data de nascimento é obrigatória');
     
     if (state.eventosSelecionados.length === 0) {
-      erros.push('Selecione pelo menos uma modalidade');
+      erros.push('Selecione uma modalidade');
     }
     
     return { valida: erros.length === 0, erros };
@@ -198,7 +131,7 @@ export const useFestivalInscricoes = () => {
   const irParaEtapa = useCallback((etapa: UseFestivalInscricoesState['etapaAtual']) => {
     if (etapa === 'formulario') {
       if (state.eventosSelecionados.length === 0) {
-        setState(prev => ({ ...prev, erros: ['Selecione pelo menos uma modalidade'] }));
+        setState(prev => ({ ...prev, erros: ['Selecione uma modalidade'] }));
         return;
       }
     }
@@ -234,12 +167,11 @@ export const useFestivalInscricoes = () => {
         observacoes: ''
       },
       etapaAtual: 'selecao',
-      erros: [],
-      filtros: {},
-      textoBusca: ''
+      erros: []
     }));
   }, []);
 
+  // Calcula preço total e resumo baseado na seleção atual
   const calculos = useMemo(() => {
     const eventosSelecionadosDetalhes = state.eventosSelecionados
       .map(id => state.todosEventos.find(e => e.id === id))
@@ -250,24 +182,20 @@ export const useFestivalInscricoes = () => {
       return total + calcularPrecoInscricao(evento.modalidade, numeroParticipantes);
     }, 0);
     
-    const estilosUnicos = [...new Set(eventosSelecionadosDetalhes.map(e => e.estilo))];
-    const modalidadesUnicas = [...new Set(eventosSelecionadosDetalhes.map(e => e.modalidade))];
+    const tituloEvento = eventosSelecionadosDetalhes.length > 0 
+      ? eventosSelecionadosDetalhes[0].titulo 
+      : '';
     
     return {
       precoTotal,
       resumoInscricao: {
-        quantidadeEventos: eventosSelecionadosDetalhes.length,
-        estilosUnicos,
-        modalidadesUnicas
+        tituloEvento
       },
       eventosSelecionadosDetalhes
     };
   }, [state.eventosSelecionados, state.todosEventos, state.participantesPorEvento]);
 
-  useEffect(() => {
-    aplicarFiltros();
-  }, [aplicarFiltros]);
-
+  // Atualiza estado com cálculos quando seleção muda
   useEffect(() => {
     setState(prev => ({
       ...prev,
@@ -286,9 +214,6 @@ export const useFestivalInscricoes = () => {
   return {
     ...state,
     
-    atualizarFiltros,
-    limparFiltros,
-    atualizarBusca,
     toggleEventoSelecao,
     atualizarParticipantesEvento,
     atualizarDadosInscricao,
@@ -298,8 +223,6 @@ export const useFestivalInscricoes = () => {
     
     ...dadosAuxiliares,
     
-    filtrarEventos: (filtros: FiltrosEventos) => filtrarEventos(state.todosEventos, filtros),
-    calcularPrecoInscricao,
-    validarInscricao
+    calcularPrecoInscricao
   };
 };
