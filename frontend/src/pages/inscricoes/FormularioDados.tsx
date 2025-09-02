@@ -1,12 +1,6 @@
 import { User, Mail, Phone, Calendar, FileText, Plus, Minus } from 'lucide-react';
-import { calcularPrecoInscricao } from '../../config/festivalEventsConfig';
-
-interface FestivalEvent {
-  id: string;
-  titulo: string;
-  modalidade: string;
-  preco: number;
-}
+import { calcularPrecoInscricao, type FestivalEvent } from '../../config/festivalEventsConfig';
+import { useState } from 'react';
 
 interface DadosInscricao {
   nome: string;
@@ -57,6 +51,12 @@ const FormularioDados = ({
   adicionarParticipante,
   removerParticipante,
 }: FormularioDadosProps) => {
+  const [camposTocados, setCamposTocados] = useState<Record<string, boolean>>({});
+
+  const marcarCampoTocado = (campo: string) => {
+    setCamposTocados(prev => ({ ...prev, [campo]: true }));
+  };
+
   const formatCPF = (value: string) => {
     const digits = value.replace(/\D/g, '').slice(0, 11);
     if (digits.length <= 3) return digits;
@@ -87,6 +87,125 @@ const FormularioDados = ({
     const part1 = digits.slice(2, 7);
     const part2 = digits.slice(7);
     return `(${ddd}) ${part1}-${part2}`;
+  };
+
+  const isResponsavel = () => {
+    return eventosSelecionadosDetalhes.some(evento => 
+      evento.categoria.includes('PRÉ') || evento.categoria.includes('JÚNIOR')
+    );
+  };
+
+  const validarCPF = (cpf: string): boolean => {
+    const apenasNumeros = cpf.replace(/\D/g, '');
+    return apenasNumeros.length === 11;
+  };
+
+  const validarEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validarCelular = (celular: string): boolean => {
+    const apenasNumeros = celular.replace(/\D/g, '');
+    return apenasNumeros.length >= 10;
+  };
+
+  const validarFormulario = (): { valido: boolean; erros: string[] } => {
+    const erros: string[] = [];
+
+    if (!dadosInscricao.nome.trim()) {
+      erros.push('Nome é obrigatório');
+    }
+
+    if (!dadosInscricao.documento || !validarCPF(dadosInscricao.documento)) {
+      erros.push('CPF é obrigatório e deve ser válido');
+    }
+
+    if (!dadosInscricao.email || !validarEmail(dadosInscricao.email)) {
+      erros.push('Email é obrigatório e deve ser válido');
+    }
+
+    if (!dadosInscricao.celular || !validarCelular(dadosInscricao.celular)) {
+      erros.push('Celular é obrigatório e deve ser válido');
+    }
+
+    if (!dadosInscricao.dataNascimento) {
+      erros.push('Data de nascimento é obrigatória');
+    }
+
+    const participantesVazios = participantes.filter(p => !p.nome.trim());
+    if (participantesVazios.length > 0) {
+      erros.push(`${participantesVazios.length} nome(s) de participante(s) não preenchido(s)`);
+    }
+
+    return { valido: erros.length === 0, erros };
+  };
+
+  const irParaPagamento = () => {
+    setCamposTocados({
+      nome: true,
+      documento: true,
+      email: true,
+      celular: true,
+      dataNascimento: true,
+      ...participantes.reduce((acc, _, index) => ({ ...acc, [`participante_${index}`]: true }), {})
+    });
+
+    const validacao = validarFormulario();
+    if (!validacao.valido) {
+      alert('Por favor, corrija os seguintes erros:\n\n' + validacao.erros.join('\n'));
+      return;
+    }
+    irParaEtapa('pagamento');
+  };
+
+  const temErro = (campo: string): boolean => {
+    if (!camposTocados[campo]) return false;
+    
+    switch (campo) {
+      case 'nome':
+        return !dadosInscricao.nome.trim();
+      case 'documento':
+        return !dadosInscricao.documento || !validarCPF(dadosInscricao.documento);
+      case 'email':
+        return !dadosInscricao.email || !validarEmail(dadosInscricao.email);
+      case 'celular':
+        return !dadosInscricao.celular || !validarCelular(dadosInscricao.celular);
+      case 'dataNascimento':
+        return !dadosInscricao.dataNascimento;
+      default:
+        if (campo.startsWith('participante_')) {
+          const index = parseInt(campo.split('_')[1]);
+          return !participantes[index]?.nome.trim();
+        }
+        return false;
+    }
+  };
+
+  const obterClasseCampo = (campo: string): string => {
+    const classeBase = "w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent";
+    const classeErro = temErro(campo) ? "border-red-500 bg-red-50" : "border-gray-300";
+    return `${classeBase} ${classeErro}`;
+  };
+
+  const obterClasseCampoParticipante = (campo: string): string => {
+    const classeBase = "flex-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent";
+    const classeErro = temErro(campo) ? "border-red-500 bg-red-50" : "border-gray-300";
+    return `${classeBase} ${classeErro}`;
+  };
+
+  const gerarLabelParticipante = (index: number): string => {
+    if (hasConjunto) {
+      return `Integrante ${index + 1} *`;
+    }
+    
+    const isSolo = eventosSelecionadosDetalhes.some(evento => evento.modalidade === 'Solo');
+    
+    if (isSolo) {
+      return 'Nome do Participante *';
+    }
+    
+    return `Nome do Participante ${index + 1} *`;
   };
 
   return (
@@ -129,7 +248,7 @@ const FormularioDados = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nome Completo *
+              {isResponsavel() ? 'Nome Completo do Responsável *' : 'Nome Completo *'}
             </label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -137,8 +256,9 @@ const FormularioDados = ({
                 type="text"
                 value={dadosInscricao.nome}
                 onChange={(e) => atualizarDadosInscricao({ nome: e.target.value })}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="Seu nome completo"
+                onBlur={() => marcarCampoTocado('nome')}
+                className={obterClasseCampo('nome')}
+                placeholder={isResponsavel() ? "Nome completo do responsável" : "Seu nome completo"}
               />
             </div>
           </div>
@@ -156,7 +276,8 @@ const FormularioDados = ({
                   const formatted = formatCPF(e.target.value);
                   atualizarDadosInscricao({ documento: formatted });
                 }}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                onBlur={() => marcarCampoTocado('documento')}
+                className={obterClasseCampo('documento')}
                 placeholder="000.000.000-00"
                 inputMode="numeric"
               />
@@ -173,7 +294,8 @@ const FormularioDados = ({
                 type="email"
                 value={dadosInscricao.email}
                 onChange={(e) => atualizarDadosInscricao({ email: e.target.value })}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                onBlur={() => marcarCampoTocado('email')}
+                className={obterClasseCampo('email')}
                 placeholder="seu@email.com"
               />
             </div>
@@ -192,7 +314,8 @@ const FormularioDados = ({
                   const formatted = formatPhoneBR(e.target.value);
                   atualizarDadosInscricao({ celular: formatted });
                 }}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                onBlur={() => marcarCampoTocado('celular')}
+                className={obterClasseCampo('celular')}
                 placeholder="(61) 9XXXX-XXXX"
                 inputMode="tel"
               />
@@ -209,7 +332,8 @@ const FormularioDados = ({
                 type="date"
                 value={dadosInscricao.dataNascimento}
                 onChange={(e) => atualizarDadosInscricao({ dataNascimento: e.target.value })}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                onBlur={() => marcarCampoTocado('dataNascimento')}
+                className={obterClasseCampo('dataNascimento')}
               />
             </div>
           </div>
@@ -247,18 +371,17 @@ const FormularioDados = ({
           {participantes.map((participante, index) => (
             <div key={index} className="mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {hasConjunto ? `Integrante ${index + 1} *` : 
-                 index === 0 ? 'Nome do Participante *' : 
-                 index === 1 ? 'Nome do Participante 2 *' : 
-                 `Nome do Participante ${index + 1} *`}
+                {gerarLabelParticipante(index)}
               </label>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={participante.nome}
                   onChange={(e) => handleParticipanteChange(index, e.target.value)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  onBlur={() => marcarCampoTocado(`participante_${index}`)}
+                  className={obterClasseCampoParticipante(`participante_${index}`)}
                   placeholder={hasConjunto ? `Nome do integrante ${index + 1}` : 
+                              eventosSelecionadosDetalhes.some(evento => evento.modalidade === 'Solo') ? 'Nome do participante' :
                               `Nome do participante ${index + 1}`}
                 />
                 {hasConjunto && index >= 4 && (
@@ -308,7 +431,7 @@ const FormularioDados = ({
           Voltar
         </button>
         <button
-          onClick={() => irParaEtapa('pagamento')}
+          onClick={irParaPagamento}
           className="flex-1 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors font-semibold"
         >
           Ir para Pagamento

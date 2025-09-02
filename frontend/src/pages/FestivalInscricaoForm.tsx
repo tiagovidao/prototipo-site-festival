@@ -123,7 +123,7 @@ const FestivalInscricaoForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-purple-50 to-gray-100 py-8">
+    <div className="min-h-screen bg-stone-50 py-8">
       <div className="max-w-6xl mx-auto px-4">
         <Routes>
           <Route
